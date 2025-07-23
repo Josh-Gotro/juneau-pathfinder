@@ -33,54 +33,63 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white shadow-lg rounded-xl p-6 w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-4 text-center">Juneau Pathfinder</h1>
+    <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center p-6">
+      <div className="bg-gray-900 shadow-xl rounded-2xl p-6 w-full max-w-md space-y-6">
+        <h1 className="text-3xl font-extrabold text-center text-white">Juneau Pathfinder</h1>
 
-        {/* Travel Mode Icons */}
-        <div className="flex justify-center gap-6 mb-6">
+        <div className="flex justify-center gap-4">
           <button
             aria-label="Walking"
             onClick={() => setTravelMode('walking')}
-            className={`text-2xl ${travelMode === 'walking' ? 'text-emerald-600' : 'text-gray-400'}`}
+            className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
+              travelMode === 'walking'
+                ? 'bg-emerald-500 text-white border-emerald-500'
+                : 'text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white'
+            }`}
           >
             <FaWalking />
           </button>
           <button
             aria-label="Public Transit"
             onClick={() => setTravelMode('transit')}
-            className={`text-2xl ${travelMode === 'transit' ? 'text-emerald-600' : 'text-gray-400'}`}
+            className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
+              travelMode === 'transit'
+                ? 'bg-emerald-500 text-white border-emerald-500'
+                : 'text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white'
+            }`}
           >
             <FaBus />
           </button>
           <button
             aria-label="Driving"
             onClick={() => setTravelMode('driving')}
-            className={`text-2xl ${travelMode === 'driving' ? 'text-emerald-600' : 'text-gray-400'}`}
+            className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
+              travelMode === 'driving'
+                ? 'bg-emerald-500 text-white border-emerald-500'
+                : 'text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white'
+            }`}
           >
             <FaCar />
           </button>
         </div>
 
-        {/* Dropdown for destination */}
-        <div className="mb-6">
-          <select
-            title="Destination"
-            className="w-full border border-gray-300 rounded p-2"
-            onChange={(e) => {
-              const selected = destinations.find(d => d.name === e.target.value)
-              if (selected) handleSelect(selected)
-            }}
-            defaultValue=""
-          >
-            <option value="" disabled>Select a destination...</option>
-            {destinations.map(dest => (
-              <option key={dest.name} value={dest.name}>{dest.name}</option>
-            ))}
-          </select>
-        </div>
+        <label htmlFor="destination-select" className="sr-only">Destination</label>
+        <select
+          id="destination-select"
+          className="w-full border border-gray-700 bg-gray-800 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+          onChange={(e) => {
+            const selected = destinations.find(d => d.name === e.target.value)
+            if (selected) handleSelect(selected)
+          }}
+          defaultValue=""
+          title="Destination"
+        >
+          <option value="" disabled>Select a destination...</option>
+          {destinations.map(dest => (
+            <option key={dest.name} value={dest.name}>{dest.name}</option>
+          ))}
+        </select>
 
-        {/* Centered QR code */}
         {selectedUrl && <QRCodeDisplay url={selectedUrl} />}
       </div>
     </div>

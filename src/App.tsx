@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { destinations } from './data/destinations'
 import type { Destination } from './data/destinations'
 import { QRCodeDisplay } from './components/QRCodeDisplay'
@@ -14,22 +14,33 @@ type TravelMode = 'walking' | 'driving' | 'transit'
 const App: React.FC = () => {
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null)
   const [travelMode, setTravelMode] = useState<TravelMode>('walking')
+  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null)
 
   const handleSelect = (dest: Destination) => {
-    let url: string
-    switch (travelMode) {
+    setSelectedDestination(dest)
+  }
+
+  const generateUrl = (dest: Destination, mode: TravelMode) => {
+    switch (mode) {
       case 'driving':
-        url = buildGoogleMapsUrlDriving(dest.query)
-        break
+        return buildGoogleMapsUrlDriving(dest.query)
       case 'transit':
-        url = buildGoogleMapsUrlPublicTransit(dest.query)
-        break
+        return buildGoogleMapsUrlPublicTransit(dest.query)
       case 'walking':
       default:
-        url = buildGoogleMapsUrlWalking(dest.query)
-        break
+        return buildGoogleMapsUrlWalking(dest.query)
     }
-    setSelectedUrl(url)
+  }
+
+  useEffect(() => {
+    if (selectedDestination) {
+      const url = generateUrl(selectedDestination, travelMode)
+      setSelectedUrl(url)
+    }
+  }, [selectedDestination, travelMode])
+
+  const handleTravelModeChange = (mode: TravelMode) => {
+    setTravelMode(mode)
   }
 
   return (
@@ -40,7 +51,7 @@ const App: React.FC = () => {
         <div className="flex justify-center gap-4">
           <button
             aria-label="Walking"
-            onClick={() => setTravelMode('walking')}
+            onClick={() => handleTravelModeChange('walking')}
             className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
               travelMode === 'walking'
                 ? 'bg-emerald-500 text-white border-emerald-500'
@@ -51,7 +62,7 @@ const App: React.FC = () => {
           </button>
           <button
             aria-label="Public Transit"
-            onClick={() => setTravelMode('transit')}
+            onClick={() => handleTravelModeChange('transit')}
             className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
               travelMode === 'transit'
                 ? 'bg-emerald-500 text-white border-emerald-500'
@@ -62,7 +73,7 @@ const App: React.FC = () => {
           </button>
           <button
             aria-label="Driving"
-            onClick={() => setTravelMode('driving')}
+            onClick={() => handleTravelModeChange('driving')}
             className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
               travelMode === 'driving'
                 ? 'bg-emerald-500 text-white border-emerald-500'

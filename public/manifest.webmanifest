@@ -1,0 +1,20 @@
+{
+  "name": "Juneau Pathfinder",
+  "short_name": "Pathfinder",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "/xtratuf_192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/xtratuf_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

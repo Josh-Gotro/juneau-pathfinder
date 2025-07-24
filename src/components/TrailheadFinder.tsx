@@ -58,7 +58,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="bg-gray-900 shadow-xl rounded-2xl p-6 w-full max-w-md space-y-6 relative">
-          <h1 className="text-3xl font-extrabold text-center text-white">Trailhead Finder</h1>
+          <h1 className="text-3xl font-extrabold text-center text-white">Trailheads</h1>
 
           <div className="flex justify-center gap-4">
             <button
@@ -152,7 +152,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
           <button
             onClick={onBack}
             className="hidden lg:block absolute -left-8 lg:-left-24 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors duration-200"
-            aria-label="Back to Pathfinder"
+            aria-label="Back to Landmarks"
           >
             <div className="flex items-center gap-1 lg:gap-2">
               <FaChevronLeft className="text-2xl lg:text-4xl" />
@@ -167,7 +167,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
         <button
           onClick={onBack}
           className="text-gray-400 hover:text-white transition-colors duration-200"
-          aria-label="Back to Pathfinder"
+          aria-label="Back to Landmarks"
         >
           <div className="flex items-center gap-2 justify-center">
             <FaChevronLeft className="text-2xl" />

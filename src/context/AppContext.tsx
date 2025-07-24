@@ -18,7 +18,7 @@ interface AppContextType {
   isQRCodeVisible: boolean
 
   // Shared state
-  currentView: 'pathfinder' | 'trailhead'
+  currentView: 'landmarks' | 'trailheads'
 
   // Actions
   setPathfinderTravelMode: (mode: TravelMode) => void
@@ -28,7 +28,7 @@ interface AppContextType {
   setSelectedTrailhead: (trailhead: Trailhead | null) => void
   setTrailheadUrl: (url: string | null) => void
   setIsQRCodeVisible: (visible: boolean) => void
-  setCurrentView: (view: 'pathfinder' | 'trailhead') => void
+  setCurrentView: (view: 'landmarks' | 'trailheads') => void
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -47,7 +47,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [trailheadUrl, setTrailheadUrl] = useState<string | null>(null)
   const [isQRCodeVisible, setIsQRCodeVisible] = useState<boolean>(false)
 
-  const [currentView, setCurrentView] = useState<'pathfinder' | 'trailhead'>('pathfinder')
+  const [currentView, setCurrentView] = useState<'landmarks' | 'trailheads'>('trailheads')
 
   const value: AppContextType = {
     pathfinderTravelMode,

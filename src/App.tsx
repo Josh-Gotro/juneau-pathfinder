@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Pathfinder } from './components/Pathfinder'
+import { Landmarks } from './components/Landmarks'
 import { TrailheadFinder } from './components/TrailheadFinder'
 import { AppProvider, useAppContext } from './context/AppContext'
 import { Analytics } from '@vercel/analytics/react'
@@ -27,10 +27,10 @@ const AppContent: React.FC = () => {
     const isLeftSwipe = distance > minSwipeDistance
     const isRightSwipe = distance < -minSwipeDistance
 
-    if (isLeftSwipe && currentView === 'pathfinder') {
-      setCurrentView('trailhead')
-    } else if (isRightSwipe && currentView === 'trailhead') {
-      setCurrentView('pathfinder')
+    if (isLeftSwipe && currentView === 'landmarks') {
+      setCurrentView('trailheads')
+    } else if (isRightSwipe && currentView === 'trailheads') {
+      setCurrentView('landmarks')
     }
   }
 
@@ -41,10 +41,10 @@ const AppContent: React.FC = () => {
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      {currentView === 'pathfinder' ? (
-        <Pathfinder />
+      {currentView === 'landmarks' ? (
+        <Landmarks />
       ) : (
-        <TrailheadFinder onBack={() => setCurrentView('pathfinder')} />
+        <TrailheadFinder onBack={() => setCurrentView('landmarks')} />
       )}
     </div>
   )

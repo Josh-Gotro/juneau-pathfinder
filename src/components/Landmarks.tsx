@@ -11,7 +11,7 @@ import {
 import { FaWalking, FaCar, FaBus, FaChevronRight, FaMap } from 'react-icons/fa'
 import { useAppContext } from '../context/AppContext'
 
-export const Pathfinder: React.FC = () => {
+export const Landmarks: React.FC = () => {
   const {
     pathfinderTravelMode,
     selectedPathfinderDestination,
@@ -53,7 +53,7 @@ export const Pathfinder: React.FC = () => {
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="bg-gray-900 shadow-xl rounded-2xl p-6 w-full max-w-md space-y-6 relative">
-          <h1 className="text-3xl font-extrabold text-center text-white">Juneau Pathfinder</h1>
+          <h1 className="text-3xl font-extrabold text-center text-white">Landmarks</h1>
 
           <div className="flex justify-center gap-4">
             <button
@@ -119,7 +119,7 @@ export const Pathfinder: React.FC = () => {
 
           {/* Arrow button for larger screens */}
           <button
-            onClick={() => setCurrentView('trailhead')}
+            onClick={() => setCurrentView('trailheads')}
             className="hidden lg:block absolute -right-8 lg:-right-24 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors duration-200"
             aria-label="Go to Trailhead Finder"
           >
@@ -134,7 +134,7 @@ export const Pathfinder: React.FC = () => {
       {/* Mobile navigation button - positioned in reserved space */}
       <div className="lg:hidden p-6 text-center">
         <button
-          onClick={() => setCurrentView('trailhead')}
+          onClick={() => setCurrentView('trailheads')}
           className="text-gray-400 hover:text-white transition-colors duration-200"
           aria-label="Go to Trailhead Finder"
         >

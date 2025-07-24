@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { trailheads } from '../data/trailheads'
 import type { Trailhead } from '../data/trailheads'
 import { QRCodeDisplay } from './QRCodeDisplay'
@@ -8,24 +8,29 @@ import {
   buildGoogleMapsUrlPublicTransit
 } from '../utils/buildMapUrl'
 import { FaWalking, FaCar, FaBus, FaChevronLeft, FaSuitcase, FaQrcode, FaChevronDown, FaChevronUp } from 'react-icons/fa'
-
-type TravelMode = 'walking' | 'driving' | 'transit'
+import { useAppContext } from '../context/AppContext'
 
 interface Props {
   onBack: () => void
 }
 
 export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
-  const [selectedUrl, setSelectedUrl] = useState<string | null>(null)
-  const [travelMode, setTravelMode] = useState<TravelMode>('driving')
-  const [selectedTrailhead, setSelectedTrailhead] = useState<Trailhead | null>(null)
-  const [isQRCodeVisible, setIsQRCodeVisible] = useState(false)
+  const {
+    trailheadTravelMode,
+    selectedTrailhead,
+    trailheadUrl,
+    isQRCodeVisible,
+    setTrailheadTravelMode,
+    setSelectedTrailhead,
+    setTrailheadUrl,
+    setIsQRCodeVisible
+  } = useAppContext()
 
   const handleSelect = (trailhead: Trailhead) => {
     setSelectedTrailhead(trailhead)
   }
 
-  const generateUrl = (trailhead: Trailhead, mode: TravelMode) => {
+  const generateUrl = (trailhead: Trailhead, mode: typeof trailheadTravelMode) => {
     switch (mode) {
       case 'driving':
         return buildGoogleMapsUrlDriving(trailhead.query)
@@ -39,13 +44,13 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
 
   useEffect(() => {
     if (selectedTrailhead) {
-      const url = generateUrl(selectedTrailhead, travelMode)
-      setSelectedUrl(url)
+      const url = generateUrl(selectedTrailhead, trailheadTravelMode)
+      setTrailheadUrl(url)
     }
-  }, [selectedTrailhead, travelMode])
+  }, [selectedTrailhead, trailheadTravelMode, setTrailheadUrl])
 
-  const handleTravelModeChange = (mode: TravelMode) => {
-    setTravelMode(mode)
+  const handleTravelModeChange = (mode: typeof trailheadTravelMode) => {
+    setTrailheadTravelMode(mode)
   }
 
   return (
@@ -59,7 +64,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
               aria-label="Walking"
               onClick={() => handleTravelModeChange('walking')}
               className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
-                travelMode === 'walking'
+                trailheadTravelMode === 'walking'
                   ? 'bg-emerald-500 text-white border-emerald-500'
                   : 'text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white'
               }`}
@@ -70,7 +75,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
               aria-label="Public Transit"
               onClick={() => handleTravelModeChange('transit')}
               className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
-                travelMode === 'transit'
+                trailheadTravelMode === 'transit'
                   ? 'bg-emerald-500 text-white border-emerald-500'
                   : 'text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white'
               }`}
@@ -81,7 +86,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
               aria-label="Driving"
               onClick={() => handleTravelModeChange('driving')}
               className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
-                travelMode === 'driving'
+                trailheadTravelMode === 'driving'
                   ? 'bg-emerald-500 text-white border-emerald-500'
                   : 'text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white'
               }`}
@@ -98,7 +103,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
               const selected = trailheads.find(t => t.name === e.target.value)
               if (selected) handleSelect(selected)
             }}
-            defaultValue=""
+            value={selectedTrailhead?.name || ""}
             title="Trailhead"
           >
             <option value="" disabled>Select a trailhead...</option>
@@ -121,9 +126,9 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
                   <span className="font-semibold">Notes:</span> {selectedTrailhead.notes}
                 </p>
               )}
-              {selectedUrl && (
+              {trailheadUrl && (
                 <a
-                  href={selectedUrl}
+                  href={trailheadUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-blue-400 hover:text-blue-300 hover:underline break-all"
@@ -134,7 +139,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
             </div>
           )}
 
-          {selectedUrl && (
+          {trailheadUrl && (
             <div className="space-y-2">
               <button
                 onClick={() => setIsQRCodeVisible(!isQRCodeVisible)}
@@ -145,7 +150,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
                 <span className="text-sm">QR Code</span>
                 {isQRCodeVisible ? <FaChevronUp className="text-xs" /> : <FaChevronDown className="text-xs" />}
               </button>
-              {isQRCodeVisible && <QRCodeDisplay url={selectedUrl} size={128} showBrowserLink={false} />}
+              {isQRCodeVisible && <QRCodeDisplay url={trailheadUrl} size={128} showBrowserLink={false} />}
             </div>
           )}
 

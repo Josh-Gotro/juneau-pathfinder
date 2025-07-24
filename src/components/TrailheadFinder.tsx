@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { trailheads } from '../data/trailheads'
 import type { Trailhead } from '../data/trailheads'
 import { QRCodeDisplay } from './QRCodeDisplay'
+import { BrowserLink } from './BrowserLink'
 import {
   buildGoogleMapsUrlWalking,
   buildGoogleMapsUrlDriving,
@@ -126,35 +127,8 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
                   <span className="font-semibold">Notes:</span> {selectedTrailhead.notes}
                 </p>
               )}
-              {selectedTrailhead.source && selectedTrailhead.source !== null && (
-                <a
-                  href={selectedTrailhead.source}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-400 hover:text-blue-300 hover:underline break-all"
-                >
-                  View on AllTrails
-                </a>
-              )}
-              {selectedTrailhead.googleMapsUrl && selectedTrailhead.googleMapsUrl !== null && (
-                <a
-                  href={selectedTrailhead.googleMapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-400 hover:text-blue-300 hover:underline break-all"
-                >
-                  Open in Google Maps
-                </a>
-              )}
               {trailheadUrl && (
-                <a
-                  href={trailheadUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-400 hover:text-blue-300 hover:underline break-all"
-                >
-                  Open directions in browser
-                </a>
+                <BrowserLink url={trailheadUrl} />
               )}
             </div>
           )}
@@ -170,7 +144,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
                 <span className="text-sm">QR Code</span>
                 {isQRCodeVisible ? <FaChevronUp className="text-xs" /> : <FaChevronDown className="text-xs" />}
               </button>
-              {isQRCodeVisible && <QRCodeDisplay url={trailheadUrl} size={128} showBrowserLink={false} />}
+              {isQRCodeVisible && <QRCodeDisplay url={trailheadUrl} size={128} />}
             </div>
           )}
 

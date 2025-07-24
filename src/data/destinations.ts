@@ -22,5 +22,3 @@ export const destinations: Destination[] = [
   { name: 'Mendenhall Glacier Visitor Center', query: '6000 Glacier Spur Rd, Juneau, AK 99801' },
   { name: 'Whale Project', query: 'Harris Harbor Way, Juneau, AK 99801' },
 ]
-
-

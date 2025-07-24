@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { destinations } from '../data/destinations'
 import type { Destination } from '../data/destinations'
 import { QRCodeDisplay } from './QRCodeDisplay'
+import { BrowserLink } from './BrowserLink'
 import {
   buildGoogleMapsUrlWalking,
   buildGoogleMapsUrlDriving,
@@ -107,7 +108,14 @@ export const Pathfinder: React.FC = () => {
             ))}
           </select>
 
-          {pathfinderUrl && <QRCodeDisplay url={pathfinderUrl} />}
+          {pathfinderUrl && (
+            <>
+              <QRCodeDisplay url={pathfinderUrl} />
+              <div className="text-center">
+                <BrowserLink url={pathfinderUrl} />
+              </div>
+            </>
+          )}
 
           {/* Arrow button for larger screens */}
           <button

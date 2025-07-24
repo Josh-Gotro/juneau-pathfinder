@@ -116,15 +116,35 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
 
           {selectedTrailhead && (
             <div className="bg-gray-800 rounded-lg p-4 space-y-2">
-              {selectedTrailhead.milemarker && (
+              {selectedTrailhead.milemarker && selectedTrailhead.milemarker !== null && (
                 <p className="text-sm text-gray-300">
                   <span className="font-semibold">Mile Marker:</span> {selectedTrailhead.milemarker}
                 </p>
               )}
-              {selectedTrailhead.notes && (
+              {selectedTrailhead.notes && selectedTrailhead.notes !== null && (
                 <p className="text-sm text-gray-300">
                   <span className="font-semibold">Notes:</span> {selectedTrailhead.notes}
                 </p>
+              )}
+              {selectedTrailhead.source && selectedTrailhead.source !== null && (
+                <a
+                  href={selectedTrailhead.source}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-400 hover:text-blue-300 hover:underline break-all"
+                >
+                  View on AllTrails
+                </a>
+              )}
+              {selectedTrailhead.googleMapsUrl && selectedTrailhead.googleMapsUrl !== null && (
+                <a
+                  href={selectedTrailhead.googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-400 hover:text-blue-300 hover:underline break-all"
+                >
+                  Open in Google Maps
+                </a>
               )}
               {trailheadUrl && (
                 <a

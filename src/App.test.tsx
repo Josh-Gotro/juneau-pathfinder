@@ -189,10 +189,6 @@ describe('App', () => {
       fireEvent.touchEnd(appContent)
 
       // Wait for state update
-      await act(async () => {
-        // Allow React to process the state update
-      })
-
       expect(screen.getByTestId('trailhead-finder')).toBeInTheDocument()
       expect(screen.queryByTestId('landmarks')).not.toBeInTheDocument()
     })

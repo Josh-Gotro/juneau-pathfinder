@@ -85,6 +85,18 @@ export const trailheads: Trailhead[] = [
     ]
   },
   {
+    name: 'Montana Creek',
+    entrances: [
+      {
+        name: 'Main Entrance',
+        query: 'Montana Creek Rd, Juneau, AK 99801',
+        milemarker: null,
+        notes: 'TODO: confirm exact entrance location, parking, and trailhead situation. Connects to Windfall Creek Trail',
+        source: 'https://www.alltrails.com/trail/us/alaska/montana-creek'
+      }
+    ]
+  },
+  {
     name: 'Point Bridget',
     entrances: [
       {
@@ -170,8 +182,20 @@ export const trailheads: Trailhead[] = [
         name: 'Main Entrance',
         query: '58.418194, -134.589904',
         milemarker: null,
-        notes: 'Connects to Mt. Mcginnis Trailhead',
+        notes: 'Trail leads to Skater Cabin and beyond to Mt. Mcginnis',
         source: 'https://www.alltrails.com/trail/us/alaska/west-glacier-trail'
+      }
+    ]
+  },
+  {
+    name: 'Windfall Creek',
+    entrances: [
+      {
+        name: 'Main Entrance',
+        query: '58.523221, -134.793959',
+        milemarker: '27',
+        notes: 'Small parking area just before Herbert River bridge. Walk down Herbert River Road to trailhead. Trail leads to Windfall Cabin and continues beyond to Montana Creek Trail.',
+        source: 'https://www.alaska.org/detail/windfall-lake-trail'
       }
     ]
   }

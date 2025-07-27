@@ -115,7 +115,7 @@ describe('Trailhead Data', () => {
       
       const connectionEntrance = mtJuneau!.entrances.find(e => e.connection === true)
       expect(connectionEntrance).toBeDefined()
-      expect(connectionEntrance!.name).toBe('Connection to Preserverence')
+      expect(connectionEntrance!.name).toBe('Connection to Perseverance')
     })
 
     it('has Perseverance Trailhead with multiple entrances', () => {

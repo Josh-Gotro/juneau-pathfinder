@@ -41,7 +41,7 @@ export const trailheads: Trailhead[] = [
         name: 'Ramp Entrance',
         query: '58.308604, -134.397586',
         milemarker: null,
-        notes: 'early entrance to trail on Basin Road.',
+        notes: 'Early entrance to trail on Basin Road.',
         source: 'https://www.alaska.org/detail/mount-juneau-trail'
       }, 
       {

@@ -28,6 +28,18 @@ export const trailheads: Trailhead[] = [
     ]
   },
   {
+    name: 'Blackerby Ridge',
+    entrances: [
+      {
+        name: 'Main Entrance',
+        query: '58.334698, -134.471814',
+        milemarker: null,
+        notes: 'tiny lot situated between two houses.',
+        source: 'https://ridgehikerjuneau.blogspot.com/2013/06/blackerby-ridge-and-cairn-peak.html',
+      }
+    ]
+  },
+  {
     name: 'Mt. Juneau',
     entrances: [
       {

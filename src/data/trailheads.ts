@@ -97,6 +97,18 @@ export const trailheads: Trailhead[] = [
     ]
   },
   {
+    name: 'Point Bishop - Dupont Dock. (end of Thane Rd.)',
+    entrances: [
+      {
+        name: 'Main Entrance',
+        query: '58.245394, -134.295743',
+        milemarker: null,
+        notes: 'Parking in a roundabout.',
+        source: 'https://www.alltrails.com/trail/us/alaska/west-glacier-trail'
+      }
+    ]
+  },
+  {
     name: 'Point Bridget',
     entrances: [
       {

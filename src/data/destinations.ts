@@ -7,6 +7,8 @@ export const destinations: Destination[] = [
   { name: 'Alaska State Capitol', query: '120 4th St, Juneau, AK 99801' },
   { name: 'Costco Wholesale', query: '5225 Commercial Blvd, Juneau, AK 99801' },
   { name: 'Deckhand Daves', query: '139 S Franklin St, Juneau, AK 99801' },
+  { name: 'Docks, Main - AS, CT, FKL', query: '470 S Franklin St, Juneau, AK 99801' },
+  { name: 'Docks, South - AJ', query: '1110 Jacobsen Dr, Juneau, AK 99801' },
   { name: 'Cope Park', query: 'Cope Park Rd, Juneau, AK 99801' },
   { name: 'Gold Creek Flume East Trailhead', query: '58.307327, -134.402282' },
   { name: 'Gold Creek Flume West Trailhead', query: '58.306550, -134.419670' },

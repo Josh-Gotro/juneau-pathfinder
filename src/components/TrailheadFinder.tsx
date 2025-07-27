@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useCallback } from 'react'
 import { trailheads } from '../data/trailheads'
-import type { Trailhead } from '../data/trailheads'
+import type { Trailhead, TrailheadEntrance } from '../data/trailheads'
 import { QRCodeDisplay } from './QRCodeDisplay'
 import { BrowserLink } from './BrowserLink'
 import {
@@ -19,36 +19,53 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
   const {
     trailheadTravelMode,
     selectedTrailhead,
+    selectedEntrance,
     trailheadUrl,
     isQRCodeVisible,
     setTrailheadTravelMode,
     setSelectedTrailhead,
+    setSelectedEntrance,
     setTrailheadUrl,
     setIsQRCodeVisible
   } = useAppContext()
 
-  const handleSelect = (trailhead: Trailhead) => {
+  const handleTrailheadSelect = (trailhead: Trailhead) => {
     setSelectedTrailhead(trailhead)
+    // Reset entrance selection when trailhead changes
+    setSelectedEntrance(null)
   }
 
-  const generateUrl = (trailhead: Trailhead, mode: typeof trailheadTravelMode) => {
+  // Auto-select entrance if trailhead has only one entrance
+  useEffect(() => {
+    if (selectedTrailhead && selectedTrailhead.entrances.length === 1) {
+      setSelectedEntrance(selectedTrailhead.entrances[0])
+    }
+  }, [selectedTrailhead, setSelectedEntrance])
+
+  const handleEntranceSelect = (entrance: TrailheadEntrance) => {
+    setSelectedEntrance(entrance)
+  }
+
+  const generateUrl = useCallback((entrance: TrailheadEntrance, mode: typeof trailheadTravelMode) => {
     switch (mode) {
       case 'driving':
-        return buildGoogleMapsUrlDriving(trailhead.query)
+        return buildGoogleMapsUrlDriving(entrance.query)
       case 'transit':
-        return buildGoogleMapsUrlPublicTransit(trailhead.query)
+        return buildGoogleMapsUrlPublicTransit(entrance.query)
       case 'walking':
       default:
-        return buildGoogleMapsUrlWalking(trailhead.query)
+        return buildGoogleMapsUrlWalking(entrance.query)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    if (selectedTrailhead) {
-      const url = generateUrl(selectedTrailhead, trailheadTravelMode)
+    if (selectedEntrance) {
+      const url = generateUrl(selectedEntrance, trailheadTravelMode)
       setTrailheadUrl(url)
     }
-  }, [selectedTrailhead, trailheadTravelMode, setTrailheadUrl])
+  }, [selectedEntrance, generateUrl, trailheadTravelMode, setTrailheadUrl])
+
+
 
   const handleTravelModeChange = (mode: typeof trailheadTravelMode) => {
     setTrailheadTravelMode(mode)
@@ -102,7 +119,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
             className="w-full border border-gray-700 bg-gray-800 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             onChange={(e) => {
               const selected = trailheads.find(t => t.name === e.target.value)
-              if (selected) handleSelect(selected)
+              if (selected) handleTrailheadSelect(selected)
             }}
             value={selectedTrailhead?.name || ""}
             title="Trailhead"
@@ -115,20 +132,48 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
             ))}
           </select>
 
-          {selectedTrailhead && (
-            <div className="bg-gray-800 rounded-lg p-4 space-y-2">
-              {selectedTrailhead.milemarker && selectedTrailhead.milemarker !== null && (
+          {/* Show entrance selection if trailhead has multiple entrances */}
+          {selectedTrailhead && selectedTrailhead.entrances.length > 1 && (
+            <>
+              <label htmlFor="entrance-select" className="sr-only">Entrance</label>
+              <select
+                id="entrance-select"
+                className="w-full border border-gray-700 bg-gray-800 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                onChange={(e) => {
+                  const selected = selectedTrailhead.entrances.find(entrance => entrance.name === e.target.value)
+                  if (selected) handleEntranceSelect(selected)
+                }}
+                value={selectedEntrance?.name || ""}
+                title="Entrance"
+              >
+                <option value="" disabled>Select an entrance...</option>
+                {selectedTrailhead.entrances.map(entrance => (
+                  <option key={entrance.name} value={entrance.name}>
+                    {entrance.name}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+
+
+
+          {selectedEntrance && (
+            <div className="bg-gray-800 rounded-lg p-4 space-y-1">
+              {selectedEntrance.milemarker && selectedEntrance.milemarker !== null && (
                 <p className="text-sm text-gray-300">
-                  <span className="font-semibold">Mile Marker:</span> {selectedTrailhead.milemarker}
+                  <span className="font-semibold">Mile Marker:</span> {selectedEntrance.milemarker}
                 </p>
               )}
-              {selectedTrailhead.notes && selectedTrailhead.notes !== null && (
+              {selectedEntrance.notes && selectedEntrance.notes !== null && (
                 <p className="text-sm text-gray-300">
-                  <span className="font-semibold">Notes:</span> {selectedTrailhead.notes}
+                  <span className="font-semibold block">Notes:</span> {selectedEntrance.notes}
                 </p>
               )}
               {trailheadUrl && (
-                <BrowserLink url={trailheadUrl} />
+                <div className="pt-2">
+                  <BrowserLink url={trailheadUrl} />
+                </div>
               )}
             </div>
           )}

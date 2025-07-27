@@ -1,8 +1,8 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { act } from '@testing-library/react'
-import App from './App'
-import { AppProvider, useAppContext } from './context/AppContext'
+import App from '../App'
+import { AppProvider, useAppContext } from '../context/AppContext'
 
 // Mock the Analytics component
 jest.mock('@vercel/analytics/react', () => ({
@@ -10,11 +10,11 @@ jest.mock('@vercel/analytics/react', () => ({
 }))
 
 // Mock the child components
-jest.mock('./components/Landmarks', () => ({
+jest.mock('../components/Landmarks', () => ({
   Landmarks: () => <div data-testid="landmarks">Landmarks Component</div>,
 }))
 
-jest.mock('./components/TrailheadFinder', () => ({
+jest.mock('../components/TrailheadFinder', () => ({
   TrailheadFinder: ({ onBack }: { onBack: () => void }) => (
     <div data-testid="trailhead-finder">
       <button onClick={onBack} data-testid="back-button">

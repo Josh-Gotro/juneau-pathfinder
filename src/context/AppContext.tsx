@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Destination } from '../data/destinations'
-import type { Trailhead } from '../data/trailheads'
+import type { Trailhead, TrailheadEntrance } from '../data/trailheads'
 
 type TravelMode = 'walking' | 'driving' | 'transit'
 
@@ -14,6 +14,7 @@ interface AppContextType {
   // TrailheadFinder state
   trailheadTravelMode: TravelMode
   selectedTrailhead: Trailhead | null
+  selectedEntrance: TrailheadEntrance | null
   trailheadUrl: string | null
   isQRCodeVisible: boolean
 
@@ -26,6 +27,7 @@ interface AppContextType {
   setPathfinderUrl: (url: string | null) => void
   setTrailheadTravelMode: (mode: TravelMode) => void
   setSelectedTrailhead: (trailhead: Trailhead | null) => void
+  setSelectedEntrance: (entrance: TrailheadEntrance | null) => void
   setTrailheadUrl: (url: string | null) => void
   setIsQRCodeVisible: (visible: boolean) => void
   setCurrentView: (view: 'landmarks' | 'trailheads') => void
@@ -44,6 +46,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const [trailheadTravelMode, setTrailheadTravelMode] = useState<TravelMode>('driving')
   const [selectedTrailhead, setSelectedTrailhead] = useState<Trailhead | null>(null)
+  const [selectedEntrance, setSelectedEntrance] = useState<TrailheadEntrance | null>(null)
   const [trailheadUrl, setTrailheadUrl] = useState<string | null>(null)
   const [isQRCodeVisible, setIsQRCodeVisible] = useState<boolean>(false)
 
@@ -55,6 +58,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     pathfinderUrl,
     trailheadTravelMode,
     selectedTrailhead,
+    selectedEntrance,
     trailheadUrl,
     isQRCodeVisible,
     currentView,
@@ -63,6 +67,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setPathfinderUrl,
     setTrailheadTravelMode,
     setSelectedTrailhead,
+    setSelectedEntrance,
     setTrailheadUrl,
     setIsQRCodeVisible,
     setCurrentView,

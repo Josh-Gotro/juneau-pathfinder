@@ -122,7 +122,7 @@ export const trailheads: Trailhead[] = [
       {
         name: 'Main Entrance',
         query: '58.327179, -134.462792',
-        notes: 'Small Parking located behind warehouse buildings.',
+        notes: 'Small parking lot located behind warehouse buildings.',
         source: 'google maps',
         googleMapsUrl: 'https://www.google.com/maps/place/Salmon+Creek+Trail/@58.329136,-134.464233,755m/data=!3m1!1e3!4m15!1m8!3m7!1s0x5400dfe2b18cfb2d:0xa5d72783541c2cf4!2sSalmon+Creek-Trail,+Juneau,+AK+99801!3b1!8m2!3d58.336011!4d-134.4347805!16s%2Fg%2F1q5bm0190!3m5!1s0x5400dfdf2bb21aeb:0x38281cd1a6beb82f!8m2!3d58.327312!4d-134.4627985!16s%2Fg%2F11f89x1zs2?entry=ttu&g_ep=EgoyMDI1MDcyMS4wIKXMDSoASAFQAw%3D%3D'
       }

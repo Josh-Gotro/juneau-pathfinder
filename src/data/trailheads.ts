@@ -69,7 +69,7 @@ export const trailheads: Trailhead[] = [
         name: 'Tram',
         query: '490 S Franklin St, Juneau, AK 99801',
         milemarker: null,
-        notes: 'pay to ride the tram then follow the trail.',
+        notes: 'Pay to ride the tram then follow the trail.',
         source: 'https://www.goldbelttram.com/'
       }
     ]

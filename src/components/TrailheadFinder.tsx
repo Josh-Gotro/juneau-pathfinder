@@ -167,7 +167,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
               )}
               {selectedEntrance.notes && selectedEntrance.notes !== null && (
                 <p className="text-sm text-gray-300">
-                  <span className="font-semibold">Notes:<br></br></span> {selectedEntrance.notes}
+                  <span className="font-semibold">Notes:<br /></span> {selectedEntrance.notes}
                 </p>
               )}
               {trailheadUrl && (

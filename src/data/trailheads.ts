@@ -52,7 +52,6 @@ export const trailheads: Trailhead[] = [
         notes: 'Maps will take you to Perseverance Trailhead, enter trail from either location and proceed to Mt. Juneau junction.',
         source: 'https://www.alaska.org/detail/mount-juneau-trail'
       }
-
     ]
   },
   {

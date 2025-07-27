@@ -104,7 +104,7 @@ export const trailheads: Trailhead[] = [
         query: '58.245394, -134.295743',
         milemarker: null,
         notes: 'Parking in a roundabout.',
-        source: 'https://www.alltrails.com/trail/us/alaska/west-glacier-trail'
+        source: 'https://www.alltrails.com/trail/us/alaska/point-bishop-dupont-trail'
       }
     ]
   },

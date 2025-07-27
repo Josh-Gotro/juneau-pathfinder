@@ -56,7 +56,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
       default:
         return buildGoogleMapsUrlWalking(entrance.query)
     }
-  }, [trailheadTravelMode])
+  }, [])
 
   useEffect(() => {
     if (selectedEntrance) {

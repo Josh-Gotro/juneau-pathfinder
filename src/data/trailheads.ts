@@ -85,6 +85,18 @@ export const trailheads: Trailhead[] = [
     ]
   },
   {
+    name: 'Fish Creek',
+    entrances: [
+      {
+        name: 'Main Entrance',
+        query: '58.331086, -134.594490',
+        milemarker: null,
+        notes: 'Turn off Douglas Hwy on to Wetlands Refuge Rd to find a parking area.',
+        source: 'https://www.alltrails.com/trail/us/alaska/fish-creek',
+      }
+    ]
+  },
+  {
     name: 'Montana Creek',
     entrances: [
       {

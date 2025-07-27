@@ -63,7 +63,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
       const url = generateUrl(selectedEntrance, trailheadTravelMode)
       setTrailheadUrl(url)
     }
-  }, [selectedEntrance, generateUrl])
+  }, [selectedEntrance, generateUrl, trailheadTravelMode, setTrailheadUrl])
 
 
 

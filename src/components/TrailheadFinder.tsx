@@ -40,7 +40,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
     if (selectedTrailhead && selectedTrailhead.entrances.length === 1) {
       setSelectedEntrance(selectedTrailhead.entrances[0])
     }
-  }, [selectedTrailhead])
+  }, [selectedTrailhead, setSelectedEntrance])
 
   const handleEntranceSelect = (entrance: TrailheadEntrance) => {
     setSelectedEntrance(entrance)

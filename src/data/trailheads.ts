@@ -45,7 +45,7 @@ export const trailheads: Trailhead[] = [
         source: 'https://www.alaska.org/detail/mount-juneau-trail'
       }, 
       {
-        name: 'Connection to Preserverence',
+        name: 'Connection to Perseverance',
         connection: true,
         query: '58.313711, -134.377988',
         milemarker: null,

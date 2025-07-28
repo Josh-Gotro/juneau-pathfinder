@@ -34,7 +34,7 @@ export const trailheads: Trailhead[] = [
         name: 'Main Entrance',
         query: '58.334698, -134.471814',
         milemarker: null,
-        notes: 'tiny lot situated between two houses.',
+        notes: 'Tiny lot situated between two houses.',
         source: 'https://ridgehikerjuneau.blogspot.com/2013/06/blackerby-ridge-and-cairn-peak.html',
       }
     ]
@@ -100,11 +100,18 @@ export const trailheads: Trailhead[] = [
     name: 'Fish Creek',
     entrances: [
       {
-        name: 'Main Entrance',
+        name: 'N Douglas Hwy (Wetlands Refuge Rd)',
         query: '58.331086, -134.594490',
         milemarker: null,
-        notes: 'Turn off Douglas Hwy on to Wetlands Refuge Rd to find a parking area.',
+        notes: 'Turn off Douglas Hwy on to Wetlands Refuge Rd to find a parking area. Trail crosses under N Douglas Hwy and continues inland.',
         source: 'https://www.alltrails.com/trail/us/alaska/fish-creek',
+      }, 
+      {
+        name: 'Fish Creek Rd. (Eagle Crest Rd)',
+        query: '58.317820, -134.553989',
+        milemarker: null,
+        notes: 'Extremely easy to miss. Just north of the fish creek crossing right past where the guard rail ends. Sharp eyes will see a small sign situated off the road for pedestrians. Parking situation unknown.',
+        source: 'https://hiiker.app/trails/alaska/juneau/fish-creek-trail',
       }
     ]
   },

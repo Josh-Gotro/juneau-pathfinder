@@ -34,7 +34,7 @@ export const trailheads: Trailhead[] = [
         name: 'Main Entrance',
         query: '58.519369, -134.803807',
         milemarker: '27',
-        notes: 'Turn left on Herbert River Rd at mile marker near milemarker 27. Follow to the end of the road.',
+        notes: 'Turn left on Herbert River Rd near milemarker 27. Trailhead is at the end of the road.',
         source: 'https://ridgehikerjuneau.blogspot.com/2013/06/blackerby-ridge-and-cairn-peak.html',
       }
     ]

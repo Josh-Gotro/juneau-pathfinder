@@ -28,6 +28,18 @@ export const trailheads: Trailhead[] = [
     ]
   },
   {
+    name: 'Boyscout Camp / Eagle River',
+    entrances: [
+      {
+        name: 'Main Entrance',
+        query: '58.519369, -134.803807',
+        milemarker: '27',
+        notes: 'Turn left on Herbert River Rd at mile marker near milemarker 27. Follow to the end of the road.',
+        source: 'https://ridgehikerjuneau.blogspot.com/2013/06/blackerby-ridge-and-cairn-peak.html',
+      }
+    ]
+  },
+  {
     name: 'Blackerby Ridge',
     entrances: [
       {

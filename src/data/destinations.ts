@@ -21,6 +21,7 @@ export const destinations: Destination[] = [
   { name: 'Sandpiper Cafe', query: 'Sandpiper Cafe, Juneau, AK' },
   { name: 'Tracy’s King Crab Shack - Main', query: '432 S Franklin St, Juneau, AK 99801' },
   { name: "Tracy's King Crab Shack 2", query: '300 Whittier St, Juneau, AK 99801' },
+  { name: 'Tram', query: '490 S Franklin St, Juneau, AK 99801'},
   { name: 'Mendenhall Glacier Visitor Center', query: '6000 Glacier Spur Rd, Juneau, AK 99801' },
   { name: 'Whale Project', query: 'Harris Harbor Way, Juneau, AK 99801' },
 ]

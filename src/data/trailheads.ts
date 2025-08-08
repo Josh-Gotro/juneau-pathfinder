@@ -152,18 +152,6 @@ export const trailheads: Trailhead[] = [
     ]
   },
   {
-    name: 'Point Bridget',
-    entrances: [
-      {
-        name: 'Main Entrance',
-        query: '58.647399, -134.933613',
-        milemarker: '39',
-        notes: 'If you cross Cowee bridge you went too far. Access to Cowee Meadow cabin and Blue Mussel Beach cabin',
-        source: 'https://www.alltrails.com/trail/us/alaska/point-bridget-trail'
-      }
-    ]
-  },
-  {
     name: 'Perseverance',
     entrances: [
       {
@@ -191,6 +179,18 @@ export const trailheads: Trailhead[] = [
         milemarker: null,
         notes: 'Small parking lot. Trail is a dirt road past a locked gate.',
         source: 'https://www.alltrails.com/trail/us/alaska/pioneer-road'
+      }
+    ]
+  },
+  {
+    name: 'Point Bridget',
+    entrances: [
+      {
+        name: 'Main Entrance',
+        query: '58.647399, -134.933613',
+        milemarker: '39',
+        notes: 'If you cross Cowee bridge you went too far. Access to Cowee Meadow cabin and Blue Mussel Beach cabin',
+        source: 'https://www.alltrails.com/trail/us/alaska/point-bridget-trail'
       }
     ]
   },

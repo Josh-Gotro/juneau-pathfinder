@@ -67,7 +67,7 @@ export const trailheads: Trailhead[] = [
         milemarker: null,
         notes: 'Early entrance to trail on Basin Road.',
         source: 'https://www.alaska.org/detail/mount-juneau-trail'
-      }, 
+      },
       {
         name: 'Connection to Perseverance',
         connection: true,
@@ -97,7 +97,7 @@ export const trailheads: Trailhead[] = [
       }
     ]
   },
-  { 
+  {
     name: 'East Glacier',
     entrances: [
       {
@@ -117,7 +117,7 @@ export const trailheads: Trailhead[] = [
         milemarker: null,
         notes: 'Turn off Douglas Hwy on to Wetlands Refuge Rd to find a parking area. Trail crosses under N Douglas Hwy and continues inland.',
         source: 'https://www.alltrails.com/trail/us/alaska/fish-creek',
-      }, 
+      },
       {
         name: 'Fish Creek Rd. (Eagle Crest Rd)',
         query: '58.317820, -134.553989',
@@ -179,6 +179,18 @@ export const trailheads: Trailhead[] = [
         milemarker: null,
         notes: 'Early entrance to trail on Basin Road.',
         source: 'https://www.alaska.org/detail/perseverance-trail'
+      }
+    ]
+  },
+  {
+    name: 'Pioneer Road',
+    entrances: [
+      {
+        name: 'Lot Entrance',
+        query: '58.295150, -134.665943',
+        milemarker: null,
+        notes: 'Small parking lot. Trail is a dirt road past a locked gate.',
+        source: 'https://www.alltrails.com/trail/us/alaska/pioneer-road'
       }
     ]
   },

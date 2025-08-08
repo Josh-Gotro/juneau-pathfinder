@@ -140,18 +140,6 @@ export const trailheads: Trailhead[] = [
     ]
   },
   {
-    name: 'Point Bishop - Dupont Dock. (end of Thane Rd.)',
-    entrances: [
-      {
-        name: 'Main Entrance',
-        query: '58.245394, -134.295743',
-        milemarker: null,
-        notes: 'Parking in a roundabout.',
-        source: 'https://www.alltrails.com/trail/us/alaska/point-bishop-dupont-trail'
-      }
-    ]
-  },
-  {
     name: 'Perseverance',
     entrances: [
       {
@@ -179,6 +167,18 @@ export const trailheads: Trailhead[] = [
         milemarker: null,
         notes: 'Small parking lot. Trail is a dirt road past a locked gate.',
         source: 'https://www.alltrails.com/trail/us/alaska/pioneer-road'
+      }
+    ]
+  },
+  {
+    name: 'Point Bishop - Dupont Dock. (end of Thane Rd.)',
+    entrances: [
+      {
+        name: 'Main Entrance',
+        query: '58.245394, -134.295743',
+        milemarker: null,
+        notes: 'Parking in a roundabout.',
+        source: 'https://www.alltrails.com/trail/us/alaska/point-bishop-dupont-trail'
       }
     ]
   },

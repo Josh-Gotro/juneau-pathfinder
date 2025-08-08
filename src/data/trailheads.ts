@@ -140,18 +140,6 @@ export const trailheads: Trailhead[] = [
     ]
   },
   {
-    name: 'Point Bishop - Dupont Dock. (end of Thane Rd.)',
-    entrances: [
-      {
-        name: 'Main Entrance',
-        query: '58.245394, -134.295743',
-        milemarker: null,
-        notes: 'Parking in a roundabout.',
-        source: 'https://www.alltrails.com/trail/us/alaska/point-bishop-dupont-trail'
-      }
-    ]
-  },
-  {
     name: 'Perseverance',
     entrances: [
       {
@@ -183,14 +171,14 @@ export const trailheads: Trailhead[] = [
     ]
   },
   {
-    name: 'Point Bridget',
+    name: 'Point Bishop - Dupont Dock. (end of Thane Rd.)',
     entrances: [
       {
         name: 'Main Entrance',
-        query: '58.647399, -134.933613',
-        milemarker: '39',
-        notes: 'If you cross Cowee bridge you went too far. Access to Cowee Meadow cabin and Blue Mussel Beach cabin',
-        source: 'https://www.alltrails.com/trail/us/alaska/point-bridget-trail'
+        query: '58.245394, -134.295743',
+        milemarker: null,
+        notes: 'Parking in a roundabout.',
+        source: 'https://www.alltrails.com/trail/us/alaska/point-bishop-dupont-trail'
       }
     ]
   },

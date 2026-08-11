@@ -1,4 +1,13 @@
-import React, { useCallback, useDeferredValue, useId, useMemo, useRef, useState } from 'react'
+import React, {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import { createPortal } from 'react-dom'
 import { SearchIcon, StarIcon, LocationArrowIcon, ChevronDownIcon } from './icons'
 import type { LocateStatus } from '../hooks/useGeolocation'
 import { useKeyboardInset } from '../hooks/useKeyboardInset'
@@ -36,6 +45,18 @@ const LOCATE_LABEL: Record<LocateStatus, string> = {
   unavailable: 'Location unavailable',
 }
 
+const EXIT_MS = 180
+
+/**
+ * Place picker with a bottom sheet.
+ *
+ * The sheet is a plain portalled overlay, deliberately *not* a <dialog> with
+ * showModal(). The dialog version rendered invisibly on iOS while still
+ * inerting the whole document, which left the app looking empty and killed the
+ * pager underneath — an unrecoverable state. A fixed-position div in a portal
+ * has none of that behaviour: no top layer, no document inerting, and nothing
+ * that depends on @starting-style or allow-discrete being supported.
+ */
 export const PlacePicker: React.FC<Props> = ({
   label,
   placeholder,
@@ -48,11 +69,16 @@ export const PlacePicker: React.FC<Props> = ({
   onLocate,
   locateStatus = 'idle',
 }) => {
-  const dialogRef = useRef<HTMLDialogElement>(null)
-  const keyboardInset = useKeyboardInset()
+  const [isOpen, setIsOpen] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query)
   const titleId = useId()
+  const keyboardInset = useKeyboardInset()
+  const panelRef = useRef<HTMLDivElement>(null)
+  const exitTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => () => clearTimeout(exitTimer.current), [])
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
@@ -60,18 +86,19 @@ export const PlacePicker: React.FC<Props> = ({
   )
 
   const open = useCallback(() => {
-    const element = dialogRef.current
-    if (!element) return
+    clearTimeout(exitTimer.current)
     setQuery('')
-    if (typeof element.showModal === 'function') element.showModal()
-    else element.setAttribute('open', '')
+    setIsClosing(false)
+    setIsOpen(true)
   }, [])
 
   const close = useCallback(() => {
-    const element = dialogRef.current
-    if (!element) return
-    if (typeof element.close === 'function') element.close()
-    else element.removeAttribute('open')
+    setIsClosing(true)
+    clearTimeout(exitTimer.current)
+    exitTimer.current = setTimeout(() => {
+      setIsOpen(false)
+      setIsClosing(false)
+    }, EXIT_MS)
   }, [])
 
   const choose = useCallback(
@@ -82,6 +109,21 @@ export const PlacePicker: React.FC<Props> = ({
     },
     [onSelect, close]
   )
+
+  // Escape closes, which <dialog> used to handle for us.
+  useEffect(() => {
+    if (!isOpen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [isOpen, close])
+
+  // Move focus into the sheet so screen readers follow it.
+  useEffect(() => {
+    if (isOpen && !isClosing) panelRef.current?.focus()
+  }, [isOpen, isClosing])
 
   const matches = useMemo(() => {
     const tokens = normalize(deferredQuery).split(' ').filter(Boolean)
@@ -154,11 +196,88 @@ export const PlacePicker: React.FC<Props> = ({
           aria-pressed={isFavorite}
           className="flex min-h-tap w-12 shrink-0 items-center justify-center rounded-control text-ink-faint transition-colors hover:bg-surface-raised hover:text-ink"
         >
-          <StarIcon filled={isFavorite} className={isFavorite ? "size-4 text-accent" : "size-4"} />
+          <StarIcon filled={isFavorite} className={isFavorite ? 'size-4 text-accent' : 'size-4'} />
         </button>
       </li>
     )
   }
+
+  const sheet = (
+    <div className="sheet-root" data-closing={isClosing ? '' : undefined}>
+      <div className="sheet-backdrop" onClick={close} aria-hidden="true" />
+
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="sheet-panel"
+        style={{ '--keyboard-inset': `${keyboardInset}px` } as React.CSSProperties}
+      >
+        <div className="shrink-0 space-y-3 border-b border-edge px-4 pt-3 pb-3">
+          <div className="mx-auto h-1 w-10 rounded-full bg-edge-strong" aria-hidden="true" />
+          <h2 id={titleId} className="sr-only">
+            {label}
+          </h2>
+
+          <div className="flex items-center gap-2 rounded-control border border-edge bg-ground px-3">
+            <SearchIcon className="size-4 shrink-0 text-ink-faint" />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              placeholder={placeholder}
+              aria-label={`Search ${label.toLowerCase()}`}
+              className="min-h-tap w-full bg-transparent text-ink placeholder:text-ink-faint focus:outline-hidden"
+            />
+          </div>
+
+          {onLocate && (
+            <button
+              type="button"
+              onClick={onLocate}
+              disabled={locateStatus === 'locating' || locateStatus === 'ready'}
+              className="flex min-h-tap w-full items-center justify-center gap-2 rounded-control border border-edge text-sm text-ink-muted transition-colors hover:border-edge-strong hover:text-ink disabled:opacity-60"
+            >
+              <LocationArrowIcon className="size-3" />
+              {LOCATE_LABEL[locateStatus]}
+            </button>
+          )}
+        </div>
+
+        <div className="sheet-list px-2">
+          {matches.length === 0 ? (
+            <p className="px-3 py-8 text-center text-sm text-ink-muted">
+              Nothing matches “{query}”.
+            </p>
+          ) : (
+            sections.map((section, index) => (
+              <section key={section.heading ?? `section-${index}`}>
+                {section.heading && (
+                  <h3 className="px-3 pt-4 pb-1 text-xs font-semibold tracking-wider text-ink-faint uppercase">
+                    {section.heading}
+                  </h3>
+                )}
+                <ul>{section.items.map(renderRow)}</ul>
+              </section>
+            ))
+          )}
+        </div>
+
+        <div className="shrink-0 border-t border-edge px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <button
+            type="button"
+            onClick={close}
+            className="min-h-tap w-full rounded-control text-sm text-ink-muted transition-colors hover:bg-surface-raised hover:text-ink"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <>
@@ -166,6 +285,7 @@ export const PlacePicker: React.FC<Props> = ({
         type="button"
         onClick={open}
         aria-haspopup="dialog"
+        aria-expanded={isOpen}
         aria-label={label}
         className="flex min-h-tap w-full items-center gap-3 rounded-control border border-edge bg-surface px-4 py-2 text-left transition-colors hover:border-edge-strong"
       >
@@ -184,73 +304,7 @@ export const PlacePicker: React.FC<Props> = ({
         <ChevronDownIcon className="size-4 shrink-0 text-ink-faint" />
       </button>
 
-      <dialog
-        ref={dialogRef}
-        aria-labelledby={titleId}
-        className="place-sheet"
-        style={{ '--keyboard-inset': `${keyboardInset}px` } as React.CSSProperties}
-      >
-        <div className="flex min-h-0 flex-1 flex-col">
-          <div className="shrink-0 space-y-3 border-b border-edge px-4 pt-3 pb-3">
-            <div className="mx-auto h-1 w-10 rounded-full bg-edge-strong" aria-hidden="true" />
-            <h2 id={titleId} className="sr-only">{label}</h2>
-
-            <div className="flex items-center gap-2 rounded-control border border-edge bg-ground px-3">
-              <SearchIcon className="size-4 shrink-0 text-ink-faint" />
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                onKeyDown={handleSearchKeyDown}
-                placeholder={placeholder}
-                aria-label={`Search ${label.toLowerCase()}`}
-                className="min-h-tap w-full bg-transparent text-ink placeholder:text-ink-faint focus:outline-hidden"
-              />
-            </div>
-
-            {onLocate && (
-              <button
-                type="button"
-                onClick={onLocate}
-                disabled={locateStatus === 'locating' || locateStatus === 'ready'}
-                className="flex min-h-tap w-full items-center justify-center gap-2 rounded-control border border-edge text-sm text-ink-muted transition-colors hover:border-edge-strong hover:text-ink disabled:opacity-60"
-              >
-                <LocationArrowIcon className="size-3" />
-                {LOCATE_LABEL[locateStatus]}
-              </button>
-            )}
-          </div>
-
-          <div className="place-sheet-list px-2">
-            {matches.length === 0 ? (
-              <p className="px-3 py-8 text-center text-sm text-ink-muted">
-                Nothing matches “{query}”.
-              </p>
-            ) : (
-              sections.map((section, index) => (
-                <section key={section.heading ?? `section-${index}`}>
-                  {section.heading && (
-                    <h3 className="px-3 pt-4 pb-1 text-xs font-semibold tracking-wider text-ink-faint uppercase">
-                      {section.heading}
-                    </h3>
-                  )}
-                  <ul>{section.items.map(renderRow)}</ul>
-                </section>
-              ))
-            )}
-          </div>
-
-          <div className="shrink-0 border-t border-edge px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-            <button
-              type="button"
-              onClick={close}
-              className="min-h-tap w-full rounded-control text-sm text-ink-muted transition-colors hover:bg-surface-raised hover:text-ink"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </dialog>
+      {isOpen && createPortal(sheet, document.body)}
     </>
   )
 }

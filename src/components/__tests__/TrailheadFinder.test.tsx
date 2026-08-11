@@ -127,6 +127,42 @@ describe('TrailheadFinder', () => {
       expect(screen.queryByRole('button', { name: /^Amalga/ })).not.toBeInTheDocument()
     })
 
+    it('opens without a modal dialog, which inerts the whole page on iOS', async () => {
+      // showModal() renders the sheet invisibly on iOS while still inerting
+      // the document, which empties the screen and kills the pager with no
+      // way to recover. The sheet must stay a plain portalled overlay.
+      renderFinder()
+      openPicker()
+
+      await screen.findByLabelText('Search trailhead')
+
+      expect(document.querySelector('dialog')).toBeNull()
+      expect(document.querySelector('[inert]')).toBeNull()
+    })
+
+    it('leaves the page behind it interactive', async () => {
+      renderFinder()
+      openPicker()
+      await screen.findByLabelText('Search trailhead')
+
+      // Controls outside the sheet must still respond, so the app can never
+      // be trapped behind an invisible overlay.
+      fireEvent.click(screen.getByLabelText('Walking'))
+      expect(screen.getByLabelText('Walking')).toHaveAttribute('aria-checked', 'true')
+    })
+
+    it('closes on Escape', async () => {
+      renderFinder()
+      openPicker()
+      await screen.findByLabelText('Search trailhead')
+
+      fireEvent.keyDown(document, { key: 'Escape' })
+
+      await waitFor(() => {
+        expect(screen.queryByLabelText('Search trailhead')).not.toBeInTheDocument()
+      })
+    })
+
     it('reports when nothing matches', async () => {
       renderFinder()
       openPicker()

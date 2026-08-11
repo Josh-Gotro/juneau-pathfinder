@@ -94,7 +94,7 @@ export const Landmarks: React.FC = () => {
           <label htmlFor="destination-select" className="sr-only">Destination</label>
           <select
             id="destination-select"
-            className="w-full border border-gray-700 bg-gray-800 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className="w-full border border-gray-700 bg-gray-800 text-white rounded-sm px-4 py-2 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             onChange={(e) => {
               const selected = destinations.find(d => d.name === e.target.value)
               if (selected) handleSelect(selected)

@@ -116,7 +116,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
           <label htmlFor="trailhead-select" className="sr-only">Trailhead</label>
           <select
             id="trailhead-select"
-            className="w-full border border-gray-700 bg-gray-800 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className="w-full border border-gray-700 bg-gray-800 text-white rounded-sm px-4 py-2 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             onChange={(e) => {
               const selected = trailheads.find(t => t.name === e.target.value)
               if (selected) handleTrailheadSelect(selected)
@@ -138,7 +138,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
               <label htmlFor="entrance-select" className="sr-only">Entrance</label>
               <select
                 id="entrance-select"
-                className="w-full border border-gray-700 bg-gray-800 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                className="w-full border border-gray-700 bg-gray-800 text-white rounded-sm px-4 py-2 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 onChange={(e) => {
                   const selected = selectedTrailhead.entrances.find(entrance => entrance.name === e.target.value)
                   if (selected) handleEntranceSelect(selected)

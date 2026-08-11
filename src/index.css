@@ -1,6 +1,105 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
+/* ---------------------------------------------------------------------------
+   Palette
+   ---------------------------------------------------------------------------
+   Raw values live on :root; @theme inline below points the Tailwind utilities
+   at the variables rather than copying their values. That indirection is what
+   lets a theme swap at runtime (see D8) without regenerating utilities.
 
+   Neutrals carry a faint green bias (hue 165) so they read as chosen against
+   the accent rather than as default grey.
+--------------------------------------------------------------------------- */
 
+:root {
+  color-scheme: dark;
+
+  /* Grounds and surfaces, darkest to lightest */
+  --ground: oklch(0.16 0.008 165);
+  --surface: oklch(0.21 0.01 165);
+  --surface-raised: oklch(0.26 0.011 165);
+
+  /* Lines */
+  --edge: oklch(0.32 0.012 165);
+  --edge-strong: oklch(0.42 0.014 165);
+
+  /* Text */
+  --ink: oklch(0.97 0.005 165);
+  --ink-muted: oklch(0.74 0.015 165);
+  --ink-faint: oklch(0.58 0.014 165);
+
+  /* Accent — one hue, every state derived from it */
+  --accent: oklch(0.7 0.15 165);
+  --accent-ink: oklch(0.18 0.03 165);
+  --accent-hover: color-mix(in oklch, var(--accent), white 12%);
+  --accent-active: color-mix(in oklch, var(--accent), black 10%);
+  --accent-quiet: color-mix(in oklch, var(--accent), transparent 85%);
+  --accent-edge: color-mix(in oklch, var(--accent), transparent 55%);
+
+  /* Focus ring reuses the accent so there is one visual language for "live" */
+  --ring: var(--accent);
+}
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+
+  --color-edge: var(--edge);
+  --color-edge-strong: var(--edge-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-active: var(--accent-active);
+  --color-accent-quiet: var(--accent-quiet);
+  --color-accent-edge: var(--accent-edge);
+
+  --color-ring: var(--ring);
+
+  /* Minimum comfortable target for a cold, wet, or gloved thumb.
+     Both platforms floor at 44px; 48 leaves margin. */
+  --spacing-tap: 3rem;
+
+  --radius-card: 1.25rem;
+  --radius-control: 0.75rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+--------------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    /* Lets height:auto animate — used by the QR collapse (D5).
+       Ignored by engines that don't support it. */
+    interpolate-size: allow-keywords;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    /* Overscroll glow at the edges of a single-screen app reads as breakage. */
+    overscroll-behavior-y: none;
+  }
+
+  /* Every focusable control gets the same visible ring, not just the selects. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

@@ -11,45 +11,71 @@ const VIEWS: ViewName[] = ['landmarks', 'trailheads']
 /**
  * Both views live side by side in a scroll-snap pager.
  *
- * The previous implementation resolved a swipe only on touchend, so nothing
- * moved under your finger and there was no way to abort a swipe you started by
- * accident. Native scroll gives momentum, rubber-banding at the edges, and
- * mid-gesture reversal for free — and no gesture code to maintain.
+ * Native scroll supplies momentum, rubber-banding at the edges, and
+ * mid-gesture reversal, and keeping both views mounted means switching never
+ * pays a remount.
  *
- * Keeping both mounted also means switching views no longer discards your
- * selection or pays a remount.
+ * Positioning is done by index x width rather than by reading offsetLeft. On
+ * iOS the grid tracks can still measure 0 during the first layout pass, and a
+ * 0 target silently agrees with a 0 scroll position — which used to leave the
+ * app showing one page while believing it was on the other.
  */
 const AppContent: React.FC = () => {
   const { currentView, setCurrentView } = useNavigation()
   const pagerRef = useRef<HTMLDivElement>(null)
-  const pageRefs = useRef<Partial<Record<ViewName, HTMLElement | null>>>({})
+  const currentIndex = Math.max(0, VIEWS.indexOf(currentView))
 
-  const setPageRef = useCallback(
-    (view: ViewName) => (element: HTMLElement | null) => {
-      pageRefs.current[view] = element
-    },
-    []
-  )
-
-  // Land on the default view without animating in from the side.
-  useLayoutEffect(() => {
+  /** Returns false when layout is not ready yet, so callers can retry. */
+  const scrollToIndex = useCallback((index: number, behavior: ScrollBehavior) => {
     const pager = pagerRef.current
-    const page = pageRefs.current[currentView]
-    if (pager && page) pager.scrollLeft = page.offsetLeft
-    // Mount only — later changes are handled by the effect below.
+    if (!pager) return false
+    const width = pager.clientWidth
+    if (width === 0) return false
+    pager.scrollTo({ left: index * width, behavior })
+    return true
+  }, [])
+
+  // Land on the opening view without animating in from the side, retrying
+  // until the grid has actually been laid out.
+  useLayoutEffect(() => {
+    if (scrollToIndex(currentIndex, 'auto')) return
+
+    let frame = 0
+    let attempts = 0
+    const retry = () => {
+      if (scrollToIndex(currentIndex, 'auto') || attempts++ > 10) return
+      frame = requestAnimationFrame(retry)
+    }
+    frame = requestAnimationFrame(retry)
+    return () => cancelAnimationFrame(frame)
+    // Mount only; later changes are handled below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Tapping the nav control scrolls the pager.
   useEffect(() => {
     const pager = pagerRef.current
-    const page = pageRefs.current[currentView]
-    if (!pager || !page) return
-    if (Math.abs(pager.scrollLeft - page.offsetLeft) < 4) return
-    pager.scrollTo({ left: page.offsetLeft, behavior: 'smooth' })
-  }, [currentView])
+    if (!pager) return
+    const width = pager.clientWidth
+    if (width === 0) return
+    // Tolerate sub-pixel drift, but never treat "not laid out" as "arrived".
+    if (Math.abs(pager.scrollLeft - currentIndex * width) < 4) return
+    scrollToIndex(currentIndex, 'smooth')
+  }, [currentIndex, scrollToIndex])
 
-  // Swiping updates which view is considered current.
+  // Keep the page alignment after a rotation or window resize.
+  useEffect(() => {
+    const onResize = () => scrollToIndex(currentIndex, 'auto')
+    window.addEventListener('resize', onResize)
+    window.addEventListener('orientationchange', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('orientationchange', onResize)
+    }
+  }, [currentIndex, scrollToIndex])
+
+  // Swiping updates which view is considered current. Advisory only: it drives
+  // the progress rail and the QR wake lock, and nothing breaks if it lags.
   useEffect(() => {
     const pager = pagerRef.current
     if (!pager) return
@@ -58,8 +84,9 @@ const AppContent: React.FC = () => {
     const handleScroll = () => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
-        if (pager.clientWidth === 0) return
-        const next = VIEWS[Math.round(pager.scrollLeft / pager.clientWidth)]
+        const width = pager.clientWidth
+        if (width === 0) return
+        const next = VIEWS[Math.round(pager.scrollLeft / width)]
         if (next && next !== currentView) setCurrentView(next)
       })
     }
@@ -74,20 +101,18 @@ const AppContent: React.FC = () => {
   return (
     <>
       <div ref={pagerRef} className="pager" data-testid="pager">
-        <section
-          ref={setPageRef('landmarks')}
-          className="pager-page"
-          aria-label="Landmarks"
-          inert={currentView !== 'landmarks'}
-        >
+        {/*
+          Neither page is marked inert. It reads like the right thing for the
+          offscreen view, but it is derived from state that can drift from the
+          real scroll position, and when it drifts the page you are looking at
+          becomes untappable *and* swallows the touch that would scroll you off
+          it — an unrecoverable state. Both pages staying live is a far smaller
+          cost than that.
+        */}
+        <section className="pager-page" aria-label="Landmarks">
           <Landmarks />
         </section>
-        <section
-          ref={setPageRef('trailheads')}
-          className="pager-page"
-          aria-label="Trailheads"
-          inert={currentView !== 'trailheads'}
-        >
+        <section className="pager-page" aria-label="Trailheads">
           <TrailheadFinder />
         </section>
       </div>

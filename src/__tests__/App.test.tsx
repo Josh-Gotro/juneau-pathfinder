@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import App from '../App'
 
 /*
@@ -18,31 +18,42 @@ jest.mock('../components/TrailheadFinder', () => ({
   TrailheadFinder: () => <div data-testid="trailhead-finder">TrailheadFinder Component</div>,
 }))
 
-/**
- * jsdom has no layout: scrollTo is absent and every offsetLeft is 0. Stubbing
- * them lets the pager's bookkeeping run without pretending jsdom can tell us
- * anything real about scroll positions.
- */
-const stubPagerLayout = (pageWidth = 400) => {
-  const pager = screen.getByTestId('pager')
+const scrollTo = jest.fn()
 
-  Object.defineProperty(pager, 'clientWidth', { value: pageWidth, configurable: true })
-  Object.defineProperty(pager, 'scrollLeft', {
-    value: 0,
+/** Every element reports this width once layout is "ready". */
+const setPagerWidth = (width: number) => {
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
     configurable: true,
-    writable: true,
+    get() {
+      return width
+    },
   })
-  pager.scrollTo = jest.fn() as unknown as typeof pager.scrollTo
+}
 
-  const pages = Array.from(pager.children) as HTMLElement[]
-  pages.forEach((page, index) => {
-    Object.defineProperty(page, 'offsetLeft', { value: index * pageWidth, configurable: true })
+/** Let queued animation frames run. */
+const flushFrames = async () => {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 40))
   })
+}
 
-  return { pager, pages }
+const lastScrollLeft = () => {
+  const call = scrollTo.mock.calls.at(-1)
+  return call ? call[0].left : undefined
 }
 
 describe('App', () => {
+  beforeEach(() => {
+    scrollTo.mockClear()
+    // jsdom has no layout, so scrollTo is absent on elements.
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      writable: true,
+      value: scrollTo,
+    })
+    setPagerWidth(0)
+  })
+
   it('renders both views at once', () => {
     render(<App />)
 
@@ -50,34 +61,58 @@ describe('App', () => {
     expect(screen.getByTestId('trailhead-finder')).toBeInTheDocument()
   })
 
-  it('opens on the trailheads view', () => {
+  it('opens on the trailheads page', async () => {
+    setPagerWidth(400)
     render(<App />)
-    const { pages } = stubPagerLayout()
 
-    // Landmarks is page 0, Trailheads page 1. Only the current page is active.
-    expect(pages[0]).toHaveAttribute('inert')
-    expect(pages[1]).not.toHaveAttribute('inert')
+    // Trailheads is index 1, so one page width across.
+    await waitFor(() => expect(lastScrollLeft()).toBe(400))
   })
 
-  it('activates landmarks once the pager is scrolled to it', async () => {
+  it('retries positioning when layout is not ready on the first pass', async () => {
+    // The regression: iOS can report a zero-width grid track during the first
+    // layout pass. Positioning by offsetLeft produced a 0 target that agreed
+    // with a 0 scroll position, so the app showed Landmarks while believing it
+    // was on Trailheads — and the correction pass saw no discrepancy to fix.
+    setPagerWidth(0)
     render(<App />)
-    const { pager, pages } = stubPagerLayout()
 
-    pager.scrollLeft = 0
+    expect(scrollTo).not.toHaveBeenCalled()
+
+    setPagerWidth(400)
+    await flushFrames()
+
+    expect(lastScrollLeft()).toBe(400)
+  })
+
+  it('never leaves a page inert, so the visible page always stays interactive', () => {
+    setPagerWidth(400)
+    render(<App />)
+
+    const pages = Array.from(screen.getByTestId('pager').children)
+    pages.forEach((page) => expect(page).not.toHaveAttribute('inert'))
+  })
+
+  it('follows the visible page while swiping', async () => {
+    setPagerWidth(400)
+    render(<App />)
+
+    const pager = screen.getByTestId('pager')
+    Object.defineProperty(pager, 'scrollLeft', { configurable: true, value: 0 })
     fireEvent.scroll(pager)
 
     await waitFor(() => {
-      expect(pages[0]).not.toHaveAttribute('inert')
+      expect(screen.getByTestId('pager-progress')).toHaveAttribute('data-index', '0')
     })
-    expect(pages[1]).toHaveAttribute('inert')
   })
 
-  it('keeps both views mounted across a view change', async () => {
+  it('keeps both views mounted across a page change', async () => {
     // This is what lets a selection survive switching views.
+    setPagerWidth(400)
     render(<App />)
-    const { pager } = stubPagerLayout()
 
-    pager.scrollLeft = 0
+    const pager = screen.getByTestId('pager')
+    Object.defineProperty(pager, 'scrollLeft', { configurable: true, value: 0 })
     fireEvent.scroll(pager)
 
     await waitFor(() => {
@@ -87,6 +122,7 @@ describe('App', () => {
   })
 
   it('gives each page an accessible name', () => {
+    setPagerWidth(400)
     render(<App />)
 
     expect(screen.getByRole('region', { name: 'Landmarks' })).toBeInTheDocument()

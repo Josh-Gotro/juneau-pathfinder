@@ -22,6 +22,8 @@ interface Props {
 export const PagerProgress: React.FC<Props> = ({ views, current }) => (
   <div
     className="pager-progress"
+    data-testid="pager-progress"
+    data-index={Math.max(0, views.indexOf(current))}
     aria-hidden="true"
     style={
       {

@@ -1,20 +1,17 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { QRCodeDisplay } from './QRCodeDisplay'
-import { BrowserLink } from './BrowserLink'
 import { AppShell } from './AppShell'
 import { TravelModeSwitch } from './TravelModeSwitch'
 import { ViewNav } from './ViewNav'
 import { PlacePicker } from './PlacePicker'
 import type { PickerItem } from './PlacePicker'
+import { DirectionsBar } from './DirectionsBar'
 import { trailheadPlaces } from '../utils/places'
 import { distanceMiles, formatMiles } from '../utils/geo'
 import { useRecents } from '../hooks/useRecents'
 import { useGeolocation } from '../hooks/useGeolocation'
-import {
-  buildGoogleMapsUrlWalking,
-  buildGoogleMapsUrlDriving,
-  buildGoogleMapsUrlPublicTransit
-} from '../utils/buildMapUrl'
+import { useMapProvider } from '../hooks/useMapProvider'
+import { buildDirectionsUrl } from '../utils/directions'
 import { FaQrcode, FaChevronDown, FaChevronUp } from 'react-icons/fa'
 import { useAppContext } from '../context/AppContext'
 
@@ -38,6 +35,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
 
   const { recentIds, favoriteIds, pushRecent, toggleFavorite } = useRecents('trailheads')
   const { coords: userCoords, status: locateStatus, request: locate } = useGeolocation()
+  const { provider, setProvider } = useMapProvider()
 
   const selectedId =
     selectedTrailhead && selectedEntrance
@@ -88,32 +86,25 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
     [setSelectedTrailhead, setSelectedEntrance, pushRecent]
   )
 
-  const generateUrl = useCallback(
-    (query: string, mode: typeof trailheadTravelMode) => {
-      switch (mode) {
-        case 'driving':
-          return buildGoogleMapsUrlDriving(query)
-        case 'transit':
-          return buildGoogleMapsUrlPublicTransit(query)
-        case 'walking':
-        default:
-          return buildGoogleMapsUrlWalking(query)
-      }
-    },
-    []
-  )
-
   useEffect(() => {
     if (selectedEntrance) {
-      setTrailheadUrl(generateUrl(selectedEntrance.query, trailheadTravelMode))
+      setTrailheadUrl(buildDirectionsUrl(provider, selectedEntrance.query, trailheadTravelMode))
     }
-  }, [selectedEntrance, generateUrl, trailheadTravelMode, setTrailheadUrl])
+  }, [selectedEntrance, provider, trailheadTravelMode, setTrailheadUrl])
 
   return (
     <AppShell
       title="Trailheads"
       footer={
         <>
+          {trailheadUrl && (
+            <DirectionsBar
+              url={trailheadUrl}
+              provider={provider}
+              onSwitchProvider={setProvider}
+              shareTitle={selectedTrailhead?.name}
+            />
+          )}
           <TravelModeSwitch value={trailheadTravelMode} onChange={setTrailheadTravelMode} />
           <ViewNav target="landmarks" onNavigate={onBack} />
         </>
@@ -144,11 +135,6 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
               <span className="block font-semibold">Notes:</span> {selectedEntrance.notes}
             </p>
           )}
-          {trailheadUrl && (
-            <div className="pt-2">
-              <BrowserLink url={trailheadUrl} />
-            </div>
-          )}
         </div>
       )}
 
@@ -167,7 +153,15 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
               ? <FaChevronUp aria-hidden="true" className="text-xs" />
               : <FaChevronDown aria-hidden="true" className="text-xs" />}
           </button>
-          {isQRCodeVisible && <QRCodeDisplay url={trailheadUrl} size={128} />}
+          {isQRCodeVisible && (
+            <QRCodeDisplay
+              url={trailheadUrl}
+              size={192}
+              title={selectedTrailhead?.name}
+              subtitle={selectedEntrance?.name}
+              mode={trailheadTravelMode}
+            />
+          )}
         </div>
       )}
     </AppShell>

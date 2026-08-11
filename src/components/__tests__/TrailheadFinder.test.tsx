@@ -13,14 +13,6 @@ jest.mock('../QRCodeDisplay', () => ({
   ),
 }))
 
-jest.mock('../BrowserLink', () => ({
-  BrowserLink: ({ url }: { url: string }) => (
-    <a href={url} data-testid="browser-link" target="_blank" rel="noopener noreferrer">
-      Open directions in browser
-    </a>
-  ),
-}))
-
 // Mocked to a predictable shape so URL assertions stay readable.
 jest.mock('../../utils/buildMapUrl', () => ({
   buildGoogleMapsUrlWalking: jest.fn((query) => `https://maps.google.com/walking/${query}`),
@@ -45,6 +37,9 @@ const renderFinder = (onBack = jest.fn()) => {
 const openPicker = () => {
   fireEvent.click(screen.getByRole('button', { name: 'Trailhead' }))
 }
+
+/** The primary action, which only appears once a place is selected. */
+const directionsLink = () => screen.getByRole('link', { name: /Directions/ })
 
 /**
  * Drive a selection the way a user does: open the sheet, type, tap a row.
@@ -140,7 +135,7 @@ describe('TrailheadFinder', () => {
       await selectPlace('amalga', /^Amalga/)
 
       await waitFor(() => {
-        expect(screen.getByTestId('browser-link')).toBeInTheDocument()
+        expect(directionsLink()).toBeInTheDocument()
       })
       expect(screen.getByText('27.2')).toBeInTheDocument()
     })
@@ -152,7 +147,7 @@ describe('TrailheadFinder', () => {
       await waitFor(() => {
         expect(screen.getByText(/Large parking area/)).toBeInTheDocument()
       })
-      expect(screen.getByTestId('browser-link')).toBeInTheDocument()
+      expect(directionsLink()).toBeInTheDocument()
     })
 
     it('replaces the previous selection when a new place is chosen', async () => {
@@ -175,7 +170,7 @@ describe('TrailheadFinder', () => {
     it('surfaces a previous selection under Recent', async () => {
       renderFinder()
       await selectPlace('amalga', /^Amalga/)
-      await waitFor(() => expect(screen.getByTestId('browser-link')).toBeInTheDocument())
+      await waitFor(() => expect(directionsLink()).toBeInTheDocument())
 
       openPicker()
 
@@ -230,7 +225,7 @@ describe('TrailheadFinder', () => {
       await selectPlace('amalga', /^Amalga/)
 
       await waitFor(() => {
-        expect(screen.getByTestId('browser-link')).toHaveAttribute(
+        expect(directionsLink()).toHaveAttribute(
           'href',
           `https://maps.google.com/driving/${AMALGA_QUERY}`
         )
@@ -240,12 +235,12 @@ describe('TrailheadFinder', () => {
     it('rebuilds the URL for walking', async () => {
       renderFinder()
       await selectPlace('amalga', /^Amalga/)
-      await waitFor(() => expect(screen.getByTestId('browser-link')).toBeInTheDocument())
+      await waitFor(() => expect(directionsLink()).toBeInTheDocument())
 
       fireEvent.click(screen.getByLabelText('Walking'))
 
       await waitFor(() => {
-        expect(screen.getByTestId('browser-link')).toHaveAttribute(
+        expect(directionsLink()).toHaveAttribute(
           'href',
           `https://maps.google.com/walking/${AMALGA_QUERY}`
         )
@@ -255,12 +250,12 @@ describe('TrailheadFinder', () => {
     it('rebuilds the URL for transit', async () => {
       renderFinder()
       await selectPlace('amalga', /^Amalga/)
-      await waitFor(() => expect(screen.getByTestId('browser-link')).toBeInTheDocument())
+      await waitFor(() => expect(directionsLink()).toBeInTheDocument())
 
       fireEvent.click(screen.getByLabelText('Public Transit'))
 
       await waitFor(() => {
-        expect(screen.getByTestId('browser-link')).toHaveAttribute(
+        expect(directionsLink()).toHaveAttribute(
           'href',
           `https://maps.google.com/transit/${AMALGA_QUERY}`
         )

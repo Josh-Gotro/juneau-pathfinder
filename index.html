@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- viewport-fit=cover lets the app paint into the notch and home-indicator
+       areas; the shell pads itself back out with env(safe-area-inset-*). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
   <!-- Match the app ground so the status bar doesn't band against it.
        Both are declared; the browser picks by the active colour scheme. -->

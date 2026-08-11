@@ -3,7 +3,8 @@ import type { ReactNode } from 'react'
 import type { Destination } from '../data/destinations'
 import type { Trailhead, TrailheadEntrance } from '../data/trailheads'
 
-type TravelMode = 'walking' | 'driving' | 'transit'
+export type TravelMode = 'walking' | 'driving' | 'transit'
+export type ViewName = 'landmarks' | 'trailheads'
 
 interface AppContextType {
   // Pathfinder state

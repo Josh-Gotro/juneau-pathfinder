@@ -70,6 +70,27 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Shell
+--------------------------------------------------------------------------- */
+
+@layer components {
+  .shell-main {
+    container: shell / inline-size;
+  }
+
+  /* Recover the centred card only where thumb reach stops mattering. On a
+     phone the card stays top-aligned, so revealing the notes panel or a QR
+     code never slides the next tap target out from under your thumb. Auto
+     margins collapse once content outgrows the container, which means long
+     content scrolls from the top rather than clipping. */
+  @container shell (width >= 48rem) {
+    .shell-card {
+      margin-block: auto;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Base
 --------------------------------------------------------------------------- */
 

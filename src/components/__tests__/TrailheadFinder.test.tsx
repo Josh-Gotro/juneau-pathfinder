@@ -258,14 +258,16 @@ describe('TrailheadFinder', () => {
       const walkingButton = screen.getByLabelText('Walking')
       const drivingButton = screen.getByLabelText('Driving')
       
+      // Assert on radio state rather than a class name: that is what the
+      // control actually communicates, and it survives restyling.
       // Default should be driving
-      expect(drivingButton).toHaveClass('bg-emerald-500')
-      expect(walkingButton).not.toHaveClass('bg-emerald-500')
-      
+      expect(drivingButton).toHaveAttribute('aria-checked', 'true')
+      expect(walkingButton).toHaveAttribute('aria-checked', 'false')
+
       // Click walking
       fireEvent.click(walkingButton)
-      expect(walkingButton).toHaveClass('bg-emerald-500')
-      expect(drivingButton).not.toHaveClass('bg-emerald-500')
+      expect(walkingButton).toHaveAttribute('aria-checked', 'true')
+      expect(drivingButton).toHaveAttribute('aria-checked', 'false')
     })
   })
 

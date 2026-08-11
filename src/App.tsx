@@ -36,7 +36,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen select-none"
+      className="min-h-[100dvh] select-none"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}

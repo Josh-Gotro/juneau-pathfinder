@@ -129,6 +129,10 @@
 @layer components {
   .shell-main {
     container: shell / inline-size;
+    /* Same reason as .sheet-list: the `overflow-y-auto` utility alone would
+       compute overflow-x to `auto` and let the view drift sideways.
+       No touch-action here — horizontal gestures must still reach the pager. */
+    overflow-x: hidden;
   }
 
   /* Recover the centred card only where thumb reach stops mattering. On a
@@ -296,7 +300,17 @@
     min-height: 0;
     flex: 1;
     overflow-y: auto;
+    /*
+     * Explicit, and load-bearing. `overflow-x` defaults to `visible`, but
+     * `visible` cannot pair with a scrolling value — the spec computes it to
+     * `auto` — so setting only overflow-y silently makes the list scroll
+     * sideways as well, which on iOS reads as the list drifting left and
+     * right under your thumb.
+     */
+    overflow-x: hidden;
     overscroll-behavior: contain;
+    /* Only vertical panning belongs to this element. */
+    touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
   }
 

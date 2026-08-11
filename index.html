@@ -3,9 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#10b981" />
 
-  <link rel="manifest" href="/manifest.webmanifest" />
+  <!-- Match the app ground so the status bar doesn't band against it.
+       Both are declared; the browser picks by the active colour scheme. -->
+  <meta name="theme-color" content="#f5f7f4" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#030712" media="(prefers-color-scheme: dark)" />
+
   <link rel="apple-touch-icon" href="/xtratuf_192.png" />
   <link rel="icon" type="image/png" href="/xtratuf_192.png" />
 

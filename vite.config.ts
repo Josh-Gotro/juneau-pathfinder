@@ -8,14 +8,16 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'favicon.ico', 'robots.txt'],
+      includeAssets: ['xtratuf_192.png', 'xtratuf_512.png'],
       manifest: {
         name: 'Juneau Pathfinder',
         short_name: 'Pathfinder',
         start_url: '/',
         display: 'standalone',
-        background_color: '#0f172a',
-        theme_color: '#10b981',
+        // Both match the app ground — a mismatched background_color
+        // shows as a coloured flash on launch.
+        background_color: '#030712',
+        theme_color: '#030712',
         icons: [
           {
             src: '/xtratuf_192.png',

@@ -228,89 +228,71 @@
 /* ---------------------------------------------------------------------------
    Place sheet
    ---------------------------------------------------------------------------
-   A bottom sheet built on <dialog>, which brings the focus trap, the Escape
-   handler, and ::backdrop for free. @starting-style plus allow-discrete gives
-   it entry *and* exit animation without mount/unmount choreography.
+   A portalled overlay, deliberately not <dialog> + showModal(). That version
+   rendered invisibly on iOS while still inerting the entire document, which
+   made the app look empty and killed the pager underneath with no way out.
+
+   Everything here is plain, long-supported CSS: no top layer, no
+   @starting-style, no allow-discrete. Entry and exit are keyframe animations
+   driven by a data attribute, so nothing depends on newer transition
+   behaviour being available.
 --------------------------------------------------------------------------- */
 
 @layer components {
-  .place-sheet {
-    /* Override the UA centring box so the sheet sits on the bottom edge. */
+  .sheet-root {
     position: fixed;
-    inset: auto 0 0 0;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .sheet-backdrop {
+    position: absolute;
+    inset: 0;
+    background: oklch(0% 0 0 / 0.55);
+    animation: sheet-fade-in 180ms ease both;
+  }
+
+  .sheet-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
     width: 100%;
     max-width: 34rem;
     margin-inline: auto;
-    padding: 0;
     border: 1px solid var(--edge);
     border-bottom: 0;
     border-radius: var(--radius-card) var(--radius-card) 0 0;
     background: var(--surface);
     color: var(--ink);
     overflow: hidden;
+    outline: none;
 
-    /*
-     * Sit above the on-screen keyboard rather than behind it. --keyboard-inset
-     * comes from the visual viewport; it is 0 whenever the keyboard is closed,
-     * so this reduces to a plain bottom sheet.
-     */
-    bottom: var(--keyboard-inset, 0px);
+    /* Sit above the on-screen keyboard rather than behind it.
+       --keyboard-inset is 0 whenever the keyboard is closed. */
+    margin-bottom: var(--keyboard-inset, 0px);
     max-height: min(85dvh, calc(100dvh - var(--keyboard-inset, 0px) - 2.5rem));
 
-    translate: 0 100%;
-    opacity: 0;
-    transition:
-      translate 260ms cubic-bezier(0.32, 0.72, 0, 1),
-      opacity 160ms ease,
-      overlay 260ms allow-discrete,
-      display 260ms allow-discrete;
+    animation: sheet-slide-in 260ms cubic-bezier(0.32, 0.72, 0, 1) both;
   }
 
-  /*
-   * Only the open state becomes a flex column — an unconditional display would
-   * beat the UA's `dialog:not([open]) { display: none }` and leave the sheet
-   * permanently on screen.
-   */
-  .place-sheet[open] {
-    display: flex;
-    flex-direction: column;
-    translate: 0 0;
-    opacity: 1;
+  .sheet-root[data-closing] .sheet-backdrop {
+    animation: sheet-fade-in 180ms ease both reverse;
   }
 
-  @starting-style {
-    .place-sheet[open] {
-      translate: 0 100%;
-      opacity: 0;
-    }
-  }
-
-  .place-sheet::backdrop {
-    background: oklch(0% 0 0 / 0.55);
-    opacity: 0;
-    transition:
-      opacity 200ms ease,
-      overlay 200ms allow-discrete,
-      display 200ms allow-discrete;
-  }
-
-  .place-sheet[open]::backdrop {
-    opacity: 1;
-  }
-
-  @starting-style {
-    .place-sheet[open]::backdrop {
-      opacity: 0;
-    }
+  .sheet-root[data-closing] .sheet-panel {
+    animation: sheet-slide-in 180ms ease both reverse;
   }
 
   /*
    * min-height: 0 is load-bearing. A flex item defaults to min-height: auto,
    * which refuses to shrink below its content, so `flex: 1` never constrains
    * this box and overflow-y never engages — the list overflows the sheet and
-   * gets clipped by its overflow: hidden, silently truncating the trailheads.
+   * gets clipped, silently truncating the trailheads.
    */
-  .place-sheet-list {
+  .sheet-list {
     min-height: 0;
     flex: 1;
     overflow-y: auto;
@@ -320,9 +302,27 @@
 
   /* Drop the iOS search-field clear button; the Cancel control covers it and
      the native affordance is a 20px target. */
-  .place-sheet input[type='search']::-webkit-search-decoration,
-  .place-sheet input[type='search']::-webkit-search-cancel-button {
+  .sheet-panel input[type='search']::-webkit-search-decoration,
+  .sheet-panel input[type='search']::-webkit-search-cancel-button {
     appearance: none;
+  }
+
+  @keyframes sheet-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes sheet-slide-in {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
   }
 }
 

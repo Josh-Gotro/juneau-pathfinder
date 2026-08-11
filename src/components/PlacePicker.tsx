@@ -1,6 +1,7 @@
 import React, { useCallback, useDeferredValue, useId, useMemo, useRef, useState } from 'react'
 import { SearchIcon, StarIcon, LocationArrowIcon, ChevronDownIcon } from './icons'
 import type { LocateStatus } from '../hooks/useGeolocation'
+import { useKeyboardInset } from '../hooks/useKeyboardInset'
 import { tap } from '../utils/haptics'
 
 export interface PickerItem {
@@ -48,6 +49,7 @@ export const PlacePicker: React.FC<Props> = ({
   locateStatus = 'idle',
 }) => {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const keyboardInset = useKeyboardInset()
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query)
   const titleId = useId()
@@ -182,8 +184,13 @@ export const PlacePicker: React.FC<Props> = ({
         <ChevronDownIcon className="size-4 shrink-0 text-ink-faint" />
       </button>
 
-      <dialog ref={dialogRef} aria-labelledby={titleId} className="place-sheet">
-        <div className="flex max-h-[85dvh] flex-col">
+      <dialog
+        ref={dialogRef}
+        aria-labelledby={titleId}
+        className="place-sheet"
+        style={{ '--keyboard-inset': `${keyboardInset}px` } as React.CSSProperties}
+      >
+        <div className="flex min-h-0 flex-1 flex-col">
           <div className="shrink-0 space-y-3 border-b border-edge px-4 pt-3 pb-3">
             <div className="mx-auto h-1 w-10 rounded-full bg-edge-strong" aria-hidden="true" />
             <h2 id={titleId} className="sr-only">{label}</h2>
@@ -214,7 +221,7 @@ export const PlacePicker: React.FC<Props> = ({
             )}
           </div>
 
-          <div className="place-sheet-list flex-1 overflow-y-auto px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="place-sheet-list px-2">
             {matches.length === 0 ? (
               <p className="px-3 py-8 text-center text-sm text-ink-muted">
                 Nothing matches “{query}”.

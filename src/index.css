@@ -247,8 +247,15 @@
     border-radius: var(--radius-card) var(--radius-card) 0 0;
     background: var(--surface);
     color: var(--ink);
-    max-height: 85dvh;
     overflow: hidden;
+
+    /*
+     * Sit above the on-screen keyboard rather than behind it. --keyboard-inset
+     * comes from the visual viewport; it is 0 whenever the keyboard is closed,
+     * so this reduces to a plain bottom sheet.
+     */
+    bottom: var(--keyboard-inset, 0px);
+    max-height: min(85dvh, calc(100dvh - var(--keyboard-inset, 0px) - 2.5rem));
 
     translate: 0 100%;
     opacity: 0;
@@ -259,7 +266,14 @@
       display 260ms allow-discrete;
   }
 
+  /*
+   * Only the open state becomes a flex column — an unconditional display would
+   * beat the UA's `dialog:not([open]) { display: none }` and leave the sheet
+   * permanently on screen.
+   */
   .place-sheet[open] {
+    display: flex;
+    flex-direction: column;
     translate: 0 0;
     opacity: 1;
   }
@@ -290,9 +304,18 @@
     }
   }
 
-  /* Keep a flicked list from chaining its scroll into the page behind it. */
+  /*
+   * min-height: 0 is load-bearing. A flex item defaults to min-height: auto,
+   * which refuses to shrink below its content, so `flex: 1` never constrains
+   * this box and overflow-y never engages — the list overflows the sheet and
+   * gets clipped by its overflow: hidden, silently truncating the trailheads.
+   */
   .place-sheet-list {
+    min-height: 0;
+    flex: 1;
+    overflow-y: auto;
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Drop the iOS search-field clear button; the Cancel control covers it and

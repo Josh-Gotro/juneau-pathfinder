@@ -1,11 +1,15 @@
-import React, { useEffect } from 'react'
-import { destinations } from '../data/destinations'
-import type { Destination } from '../data/destinations'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { QRCodeDisplay } from './QRCodeDisplay'
 import { BrowserLink } from './BrowserLink'
 import { AppShell } from './AppShell'
 import { TravelModeSwitch } from './TravelModeSwitch'
 import { ViewNav } from './ViewNav'
+import { PlacePicker } from './PlacePicker'
+import type { PickerItem } from './PlacePicker'
+import { landmarkPlaces } from '../utils/places'
+import { distanceMiles, formatMiles } from '../utils/geo'
+import { useRecents } from '../hooks/useRecents'
+import { useGeolocation } from '../hooks/useGeolocation'
 import {
   buildGoogleMapsUrlWalking,
   buildGoogleMapsUrlDriving,
@@ -24,28 +28,56 @@ export const Landmarks: React.FC = () => {
     setCurrentView
   } = useAppContext()
 
-  const handleSelect = (dest: Destination) => {
-    setSelectedPathfinderDestination(dest)
-  }
+  const { recentIds, favoriteIds, pushRecent, toggleFavorite } = useRecents('landmarks')
+  const { coords: userCoords, status: locateStatus, request: locate } = useGeolocation()
 
-  const generateUrl = (dest: Destination, mode: typeof pathfinderTravelMode) => {
+  const items: PickerItem[] = useMemo(() => {
+    const withDistance = landmarkPlaces.map((place) => {
+      const miles = userCoords && place.coords ? distanceMiles(userCoords, place.coords) : null
+      return {
+        miles,
+        item: {
+          id: place.id,
+          title: place.title,
+          meta: miles !== null ? formatMiles(miles) : undefined,
+        } satisfies PickerItem,
+      }
+    })
+
+    if (userCoords) {
+      withDistance.sort((a, b) => (a.miles ?? Infinity) - (b.miles ?? Infinity))
+    }
+
+    return withDistance.map((entry) => entry.item)
+  }, [userCoords])
+
+  const handleSelect = useCallback(
+    (id: string) => {
+      const place = landmarkPlaces.find((candidate) => candidate.id === id)
+      if (!place) return
+      setSelectedPathfinderDestination(place.destination)
+      pushRecent(id)
+    },
+    [setSelectedPathfinderDestination, pushRecent]
+  )
+
+  const generateUrl = useCallback((query: string, mode: typeof pathfinderTravelMode) => {
     switch (mode) {
       case 'driving':
-        return buildGoogleMapsUrlDriving(dest.query)
+        return buildGoogleMapsUrlDriving(query)
       case 'transit':
-        return buildGoogleMapsUrlPublicTransit(dest.query)
+        return buildGoogleMapsUrlPublicTransit(query)
       case 'walking':
       default:
-        return buildGoogleMapsUrlWalking(dest.query)
+        return buildGoogleMapsUrlWalking(query)
     }
-  }
+  }, [])
 
   useEffect(() => {
     if (selectedPathfinderDestination) {
-      const url = generateUrl(selectedPathfinderDestination, pathfinderTravelMode)
-      setPathfinderUrl(url)
+      setPathfinderUrl(generateUrl(selectedPathfinderDestination.query, pathfinderTravelMode))
     }
-  }, [selectedPathfinderDestination, pathfinderTravelMode, setPathfinderUrl])
+  }, [selectedPathfinderDestination, generateUrl, pathfinderTravelMode, setPathfinderUrl])
 
   return (
     <AppShell
@@ -57,22 +89,18 @@ export const Landmarks: React.FC = () => {
         </>
       }
     >
-      <label htmlFor="destination-select" className="sr-only">Destination</label>
-      <select
-        id="destination-select"
-        className="min-h-tap w-full rounded-control border border-edge bg-surface px-4 text-ink focus:border-transparent focus:ring-2 focus:ring-ring focus:outline-hidden"
-        onChange={(e) => {
-          const selected = destinations.find(d => d.name === e.target.value)
-          if (selected) handleSelect(selected)
-        }}
-        value={selectedPathfinderDestination?.name || ""}
-        title="Destination"
-      >
-        <option value="" disabled>Select a destination...</option>
-        {destinations.map(dest => (
-          <option key={dest.name} value={dest.name}>{dest.name}</option>
-        ))}
-      </select>
+      <PlacePicker
+        label="Destination"
+        placeholder="Select a destination..."
+        items={items}
+        selectedId={selectedPathfinderDestination?.name ?? null}
+        onSelect={handleSelect}
+        recentIds={recentIds}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={toggleFavorite}
+        onLocate={locate}
+        locateStatus={locateStatus}
+      />
 
       {pathfinderUrl && (
         <>

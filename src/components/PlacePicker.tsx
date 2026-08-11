@@ -1,5 +1,5 @@
 import React, { useCallback, useDeferredValue, useId, useMemo, useRef, useState } from 'react'
-import { FaSearch, FaStar, FaRegStar, FaLocationArrow, FaChevronDown } from 'react-icons/fa'
+import { SearchIcon, StarIcon, LocationArrowIcon, ChevronDownIcon } from './icons'
 import type { LocateStatus } from '../hooks/useGeolocation'
 
 export interface PickerItem {
@@ -150,7 +150,7 @@ export const PlacePicker: React.FC<Props> = ({
           aria-pressed={isFavorite}
           className="flex min-h-tap w-12 shrink-0 items-center justify-center rounded-control text-ink-faint transition-colors hover:bg-surface-raised hover:text-ink"
         >
-          {isFavorite ? <FaStar aria-hidden="true" className="text-accent" /> : <FaRegStar aria-hidden="true" />}
+          <StarIcon filled={isFavorite} className={isFavorite ? "size-4 text-accent" : "size-4"} />
         </button>
       </li>
     )
@@ -177,7 +177,7 @@ export const PlacePicker: React.FC<Props> = ({
             <span className="block truncate text-ink-muted">{placeholder}</span>
           )}
         </span>
-        <FaChevronDown aria-hidden="true" className="shrink-0 text-sm text-ink-faint" />
+        <ChevronDownIcon className="size-4 shrink-0 text-ink-faint" />
       </button>
 
       <dialog ref={dialogRef} aria-labelledby={titleId} className="place-sheet">
@@ -187,7 +187,7 @@ export const PlacePicker: React.FC<Props> = ({
             <h2 id={titleId} className="sr-only">{label}</h2>
 
             <div className="flex items-center gap-2 rounded-control border border-edge bg-ground px-3">
-              <FaSearch aria-hidden="true" className="shrink-0 text-sm text-ink-faint" />
+              <SearchIcon className="size-4 shrink-0 text-ink-faint" />
               <input
                 type="search"
                 value={query}
@@ -206,7 +206,7 @@ export const PlacePicker: React.FC<Props> = ({
                 disabled={locateStatus === 'locating' || locateStatus === 'ready'}
                 className="flex min-h-tap w-full items-center justify-center gap-2 rounded-control border border-edge text-sm text-ink-muted transition-colors hover:border-edge-strong hover:text-ink disabled:opacity-60"
               >
-                <FaLocationArrow aria-hidden="true" className="text-xs" />
+                <LocationArrowIcon className="size-3" />
                 {LOCATE_LABEL[locateStatus]}
               </button>
             )}

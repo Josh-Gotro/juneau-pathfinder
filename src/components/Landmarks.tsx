@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { QRCodeDisplay } from './QRCodeDisplay'
 import { AppShell } from './AppShell'
 import { TravelModeSwitch } from './TravelModeSwitch'
@@ -12,18 +12,12 @@ import { useRecents } from '../hooks/useRecents'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useMapProvider } from '../hooks/useMapProvider'
 import { buildDirectionsUrl } from '../utils/directions'
-import { useAppContext } from '../context/AppContext'
+import { useLandmarksState, useNavigation } from '../context/AppContext'
 
 export const Landmarks: React.FC = () => {
-  const {
-    pathfinderTravelMode,
-    selectedPathfinderDestination,
-    pathfinderUrl,
-    setPathfinderTravelMode,
-    setSelectedPathfinderDestination,
-    setPathfinderUrl,
-    setCurrentView
-  } = useAppContext()
+  const { travelMode, setTravelMode, selectedDestination, setSelectedDestination } =
+    useLandmarksState()
+  const { setCurrentView } = useNavigation()
 
   const { recentIds, favoriteIds, pushRecent, toggleFavorite } = useRecents('landmarks')
   const { coords: userCoords, status: locateStatus, request: locate } = useGeolocation()
@@ -53,34 +47,31 @@ export const Landmarks: React.FC = () => {
     (id: string) => {
       const place = landmarkPlaces.find((candidate) => candidate.id === id)
       if (!place) return
-      setSelectedPathfinderDestination(place.destination)
+      setSelectedDestination(place.destination)
       pushRecent(id)
     },
-    [setSelectedPathfinderDestination, pushRecent]
+    [setSelectedDestination, pushRecent]
   )
 
-  useEffect(() => {
-    if (selectedPathfinderDestination) {
-      setPathfinderUrl(
-        buildDirectionsUrl(provider, selectedPathfinderDestination.query, pathfinderTravelMode)
-      )
-    }
-  }, [selectedPathfinderDestination, provider, pathfinderTravelMode, setPathfinderUrl])
+  // Derived, not stored: a pure function of the selection, mode, and provider.
+  const url = selectedDestination
+    ? buildDirectionsUrl(provider, selectedDestination.query, travelMode)
+    : null
 
   return (
     <AppShell
       title="Landmarks"
       footer={
         <>
-          {pathfinderUrl && (
+          {url && (
             <DirectionsBar
-              url={pathfinderUrl}
+              url={url}
               provider={provider}
               onSwitchProvider={setProvider}
-              shareTitle={selectedPathfinderDestination?.name}
+              shareTitle={selectedDestination?.name}
             />
           )}
-          <TravelModeSwitch value={pathfinderTravelMode} onChange={setPathfinderTravelMode} />
+          <TravelModeSwitch value={travelMode} onChange={setTravelMode} />
           <ViewNav target="trailheads" onNavigate={() => setCurrentView('trailheads')} />
         </>
       }
@@ -89,7 +80,7 @@ export const Landmarks: React.FC = () => {
         label="Destination"
         placeholder="Select a destination..."
         items={items}
-        selectedId={selectedPathfinderDestination?.name ?? null}
+        selectedId={selectedDestination?.name ?? null}
         onSelect={handleSelect}
         recentIds={recentIds}
         favoriteIds={favoriteIds}
@@ -98,12 +89,8 @@ export const Landmarks: React.FC = () => {
         locateStatus={locateStatus}
       />
 
-      {pathfinderUrl && (
-        <QRCodeDisplay
-          url={pathfinderUrl}
-          title={selectedPathfinderDestination?.name}
-          mode={pathfinderTravelMode}
-        />
+      {url && (
+        <QRCodeDisplay url={url} title={selectedDestination?.name} mode={travelMode} />
       )}
     </AppShell>
   )

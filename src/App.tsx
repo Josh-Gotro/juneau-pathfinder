@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { Landmarks } from './components/Landmarks'
 import { TrailheadFinder } from './components/TrailheadFinder'
-import { AppProvider, useAppContext } from './context/AppContext'
+import { AppProvider, useNavigation } from './context/AppContext'
 import { Analytics } from '@vercel/analytics/react'
 
 const AppContent: React.FC = () => {
-  const { currentView, setCurrentView } = useAppContext()
+  const { currentView, setCurrentView } = useNavigation()
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
 

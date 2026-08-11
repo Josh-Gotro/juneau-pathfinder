@@ -1,10 +1,10 @@
 import React from 'react'
-import { FaChevronLeft, FaChevronRight, FaMap, FaSuitcase } from 'react-icons/fa'
+import { ChevronLeftIcon, ChevronRightIcon, MapIcon, SuitcaseIcon } from './icons'
 import type { ViewName } from '../context/AppContext'
 
 const TARGETS = {
-  landmarks: { label: 'Landmarks', ariaLabel: 'Back to Landmarks', Icon: FaSuitcase },
-  trailheads: { label: 'Trailheads', ariaLabel: 'Go to Trailhead Finder', Icon: FaMap },
+  landmarks: { label: 'Landmarks', ariaLabel: 'Back to Landmarks', Icon: SuitcaseIcon },
+  trailheads: { label: 'Trailheads', ariaLabel: 'Go to Trailhead Finder', Icon: MapIcon },
 } as const
 
 interface Props {
@@ -30,12 +30,12 @@ export const ViewNav: React.FC<Props> = ({ target, onNavigate }) => {
       aria-label={ariaLabel}
       className="flex min-h-tap w-full items-center justify-center gap-2 rounded-control text-ink-muted transition-colors duration-200 hover:bg-surface hover:text-ink"
     >
-      {pointsBack && <FaChevronLeft aria-hidden="true" className="text-lg" />}
-      <Icon aria-hidden="true" className="text-lg" />
+      {pointsBack && <ChevronLeftIcon className="size-5" />}
+      <Icon className="size-5" />
       {/* Label is dropped on very narrow containers, where the icon pair is
           already unambiguous and horizontal room is scarce. */}
       <span className="hidden text-sm font-medium @[18rem]:inline">{label}</span>
-      {!pointsBack && <FaChevronRight aria-hidden="true" className="text-lg" />}
+      {!pointsBack && <ChevronRightIcon className="size-5" />}
     </button>
   )
 }

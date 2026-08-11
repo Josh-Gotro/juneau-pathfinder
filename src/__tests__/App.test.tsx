@@ -2,7 +2,7 @@ import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { act } from '@testing-library/react'
 import App from '../App'
-import { AppProvider, useAppContext } from '../context/AppContext'
+import { AppProvider, useNavigation } from '../context/AppContext'
 
 // Mock the Analytics component
 jest.mock('@vercel/analytics/react', () => ({
@@ -41,7 +41,7 @@ const TestWrapper: React.FC<{
 const TestContextSetter: React.FC<{ initialView: 'landmarks' | 'trailheads' }> = ({
   initialView,
 }) => {
-  const { setCurrentView } = useAppContext()
+  const { setCurrentView } = useNavigation()
   React.useEffect(() => {
     setCurrentView(initialView)
   }, [initialView, setCurrentView])
@@ -50,7 +50,7 @@ const TestContextSetter: React.FC<{ initialView: 'landmarks' | 'trailheads' }> =
 
 // AppContent component for isolated testing
 const AppContent: React.FC = () => {
-  const { currentView, setCurrentView } = useAppContext()
+  const { currentView, setCurrentView } = useNavigation()
   const [touchStart, setTouchStart] = React.useState<number | null>(null)
   const [touchEnd, setTouchEnd] = React.useState<number | null>(null)
 

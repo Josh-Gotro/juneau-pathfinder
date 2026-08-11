@@ -1,11 +1,11 @@
 import React from 'react'
-import { FaWalking, FaBus, FaCar } from 'react-icons/fa'
+import { WalkingIcon, BusIcon, CarIcon } from './icons'
 import type { TravelMode } from '../context/AppContext'
 
 const MODES = [
-  { mode: 'walking', label: 'Walking', Icon: FaWalking },
-  { mode: 'transit', label: 'Public Transit', Icon: FaBus },
-  { mode: 'driving', label: 'Driving', Icon: FaCar },
+  { mode: 'walking', label: 'Walking', Icon: WalkingIcon },
+  { mode: 'transit', label: 'Public Transit', Icon: BusIcon },
+  { mode: 'driving', label: 'Driving', Icon: CarIcon },
 ] as const satisfies ReadonlyArray<{ mode: TravelMode; label: string; Icon: React.ComponentType }>
 
 interface Props {
@@ -36,7 +36,7 @@ export const TravelModeSwitch: React.FC<Props> = ({ value, onChange }) => (
               : 'border-edge text-ink-muted hover:border-edge-strong hover:text-ink'
           }`}
         >
-          <Icon aria-hidden="true" />
+          <Icon />
         </button>
       )
     })}

@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import { FaDirections, FaShareAlt } from 'react-icons/fa'
+import { DirectionsIcon, ShareIcon } from './icons'
 import { MAP_PROVIDER_LABEL } from '../utils/directions'
 import type { MapProvider } from '../utils/directions'
 
@@ -37,7 +37,7 @@ export const DirectionsBar: React.FC<Props> = ({
           rel="noopener noreferrer"
           className="flex min-h-tap flex-1 items-center justify-center gap-2 rounded-control bg-accent font-semibold text-accent-ink transition-colors hover:bg-accent-hover active:bg-accent-active"
         >
-          <FaDirections aria-hidden="true" />
+          <DirectionsIcon className="size-5" />
           Directions
         </a>
 
@@ -48,7 +48,7 @@ export const DirectionsBar: React.FC<Props> = ({
             aria-label="Share directions"
             className="flex min-h-tap w-tap shrink-0 items-center justify-center rounded-control border border-edge text-ink-muted transition-colors hover:border-edge-strong hover:text-ink"
           >
-            <FaShareAlt aria-hidden="true" />
+            <ShareIcon className="size-5" />
           </button>
         )}
       </div>

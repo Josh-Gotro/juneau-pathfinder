@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { QRCodeDisplay } from './QRCodeDisplay'
 import { AppShell } from './AppShell'
 import { TravelModeSwitch } from './TravelModeSwitch'
@@ -12,8 +12,8 @@ import { useRecents } from '../hooks/useRecents'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useMapProvider } from '../hooks/useMapProvider'
 import { buildDirectionsUrl } from '../utils/directions'
-import { FaQrcode, FaChevronDown, FaChevronUp } from 'react-icons/fa'
-import { useAppContext } from '../context/AppContext'
+import { QrIcon, ChevronDownIcon, ChevronUpIcon } from './icons'
+import { useTrailheadState } from '../context/AppContext'
 
 interface Props {
   onBack: () => void
@@ -21,17 +21,15 @@ interface Props {
 
 export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
   const {
-    trailheadTravelMode,
+    travelMode,
+    setTravelMode,
     selectedTrailhead,
-    selectedEntrance,
-    trailheadUrl,
-    isQRCodeVisible,
-    setTrailheadTravelMode,
     setSelectedTrailhead,
+    selectedEntrance,
     setSelectedEntrance,
-    setTrailheadUrl,
-    setIsQRCodeVisible
-  } = useAppContext()
+    isQRCodeVisible,
+    setIsQRCodeVisible,
+  } = useTrailheadState()
 
   const { recentIds, favoriteIds, pushRecent, toggleFavorite } = useRecents('trailheads')
   const { coords: userCoords, status: locateStatus, request: locate } = useGeolocation()
@@ -48,10 +46,8 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
    */
   const items: PickerItem[] = useMemo(() => {
     const withDistance = trailheadPlaces.map((place) => {
-      const miles =
-        userCoords && place.coords ? distanceMiles(userCoords, place.coords) : null
+      const miles = userCoords && place.coords ? distanceMiles(userCoords, place.coords) : null
       return {
-        place,
         miles,
         item: {
           id: place.id,
@@ -86,26 +82,25 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
     [setSelectedTrailhead, setSelectedEntrance, pushRecent]
   )
 
-  useEffect(() => {
-    if (selectedEntrance) {
-      setTrailheadUrl(buildDirectionsUrl(provider, selectedEntrance.query, trailheadTravelMode))
-    }
-  }, [selectedEntrance, provider, trailheadTravelMode, setTrailheadUrl])
+  // Derived, not stored: a pure function of the selection, mode, and provider.
+  const url = selectedEntrance
+    ? buildDirectionsUrl(provider, selectedEntrance.query, travelMode)
+    : null
 
   return (
     <AppShell
       title="Trailheads"
       footer={
         <>
-          {trailheadUrl && (
+          {url && (
             <DirectionsBar
-              url={trailheadUrl}
+              url={url}
               provider={provider}
               onSwitchProvider={setProvider}
               shareTitle={selectedTrailhead?.name}
             />
           )}
-          <TravelModeSwitch value={trailheadTravelMode} onChange={setTrailheadTravelMode} />
+          <TravelModeSwitch value={travelMode} onChange={setTravelMode} />
           <ViewNav target="landmarks" onNavigate={onBack} />
         </>
       }
@@ -125,12 +120,12 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
 
       {selectedEntrance && (
         <div className="space-y-1 rounded-control bg-surface p-4">
-          {selectedEntrance.milemarker && selectedEntrance.milemarker !== null && (
+          {selectedEntrance.milemarker && (
             <p className="text-sm text-ink-muted">
               <span className="font-semibold">Mile Marker:</span> {selectedEntrance.milemarker}
             </p>
           )}
-          {selectedEntrance.notes && selectedEntrance.notes !== null && (
+          {selectedEntrance.notes && (
             <p className="text-sm text-ink-muted">
               <span className="block font-semibold">Notes:</span> {selectedEntrance.notes}
             </p>
@@ -138,28 +133,30 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
         </div>
       )}
 
-      {trailheadUrl && (
+      {url && (
         <div className="space-y-2">
           <button
             type="button"
             onClick={() => setIsQRCodeVisible(!isQRCodeVisible)}
             className="flex min-h-tap items-center gap-2 text-ink-muted transition-colors duration-200 hover:text-ink"
-            aria-label={isQRCodeVisible ? "Hide QR Code" : "Show QR Code"}
+            aria-label={isQRCodeVisible ? 'Hide QR Code' : 'Show QR Code'}
             aria-expanded={isQRCodeVisible}
           >
-            <FaQrcode aria-hidden="true" className="text-sm" />
+            <QrIcon className="size-4" />
             <span className="text-sm">QR Code</span>
-            {isQRCodeVisible
-              ? <FaChevronUp aria-hidden="true" className="text-xs" />
-              : <FaChevronDown aria-hidden="true" className="text-xs" />}
+            {isQRCodeVisible ? (
+              <ChevronUpIcon className="size-3" />
+            ) : (
+              <ChevronDownIcon className="size-3" />
+            )}
           </button>
           {isQRCodeVisible && (
             <QRCodeDisplay
-              url={trailheadUrl}
+              url={url}
               size={192}
               title={selectedTrailhead?.name}
               subtitle={selectedEntrance?.name}
-              mode={trailheadTravelMode}
+              mode={travelMode}
             />
           )}
         </div>

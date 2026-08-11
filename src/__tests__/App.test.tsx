@@ -1,282 +1,95 @@
-import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { act } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import App from '../App'
-import { AppProvider, useAppContext } from '../context/AppContext'
 
-// Mock the Analytics component
+/*
+ * This suite previously defined its own copy of AppContent and exercised that,
+ * so it passed regardless of what App.tsx did. It now renders the real App.
+ */
+
 jest.mock('@vercel/analytics/react', () => ({
   Analytics: () => null,
 }))
 
-// Mock the child components
 jest.mock('../components/Landmarks', () => ({
   Landmarks: () => <div data-testid="landmarks">Landmarks Component</div>,
 }))
 
 jest.mock('../components/TrailheadFinder', () => ({
-  TrailheadFinder: ({ onBack }: { onBack: () => void }) => (
-    <div data-testid="trailhead-finder">
-      <button onClick={onBack} data-testid="back-button">
-        Back to Landmarks
-      </button>
-      TrailheadFinder Component
-    </div>
-  ),
+  TrailheadFinder: () => <div data-testid="trailhead-finder">TrailheadFinder Component</div>,
 }))
 
-// Helper component to test AppContent with custom context values
-const TestWrapper: React.FC<{
-  children: React.ReactNode
-  initialView?: 'landmarks' | 'trailheads'
-}> = ({ children, initialView = 'trailheads' }) => {
-  return (
-    <AppProvider>
-      <TestContextSetter initialView={initialView} />
-      {children}
-    </AppProvider>
-  )
-}
+/**
+ * jsdom has no layout: scrollTo is absent and every offsetLeft is 0. Stubbing
+ * them lets the pager's bookkeeping run without pretending jsdom can tell us
+ * anything real about scroll positions.
+ */
+const stubPagerLayout = (pageWidth = 400) => {
+  const pager = screen.getByTestId('pager')
 
-const TestContextSetter: React.FC<{ initialView: 'landmarks' | 'trailheads' }> = ({
-  initialView,
-}) => {
-  const { setCurrentView } = useAppContext()
-  React.useEffect(() => {
-    setCurrentView(initialView)
-  }, [initialView, setCurrentView])
-  return null
-}
+  Object.defineProperty(pager, 'clientWidth', { value: pageWidth, configurable: true })
+  Object.defineProperty(pager, 'scrollLeft', {
+    value: 0,
+    configurable: true,
+    writable: true,
+  })
+  pager.scrollTo = jest.fn() as unknown as typeof pager.scrollTo
 
-// AppContent component for isolated testing
-const AppContent: React.FC = () => {
-  const { currentView, setCurrentView } = useAppContext()
-  const [touchStart, setTouchStart] = React.useState<number | null>(null)
-  const [touchEnd, setTouchEnd] = React.useState<number | null>(null)
+  const pages = Array.from(pager.children) as HTMLElement[]
+  pages.forEach((page, index) => {
+    Object.defineProperty(page, 'offsetLeft', { value: index * pageWidth, configurable: true })
+  })
 
-  const minSwipeDistance = 50
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null)
-    setTouchStart(e.targetTouches[0].clientX)
-  }
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX)
-  }
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return
-    const distance = touchStart - touchEnd
-    const isLeftSwipe = distance > minSwipeDistance
-    const isRightSwipe = distance < -minSwipeDistance
-
-    if (isLeftSwipe && currentView === 'landmarks') {
-      setCurrentView('trailheads')
-    } else if (isRightSwipe && currentView === 'trailheads') {
-      setCurrentView('landmarks')
-    }
-  }
-
-  return (
-    <div
-      className="min-h-screen select-none"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      data-testid="app-content"
-    >
-      {currentView === 'landmarks' ? (
-        <div data-testid="landmarks">Landmarks Component</div>
-      ) : (
-        <div data-testid="trailhead-finder">
-          <button onClick={() => setCurrentView('landmarks')} data-testid="back-button">
-            Back to Landmarks
-          </button>
-          TrailheadFinder Component
-        </div>
-      )}
-    </div>
-  )
+  return { pager, pages }
 }
 
 describe('App', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
+  it('renders both views at once', () => {
+    render(<App />)
+
+    expect(screen.getByTestId('landmarks')).toBeInTheDocument()
+    expect(screen.getByTestId('trailhead-finder')).toBeInTheDocument()
   })
 
-  describe('App Component', () => {
-    it('renders without crashing', () => {
-      render(<App />)
-      expect(screen.getByTestId('trailhead-finder')).toBeInTheDocument()
-    })
+  it('opens on the trailheads view', () => {
+    render(<App />)
+    const { pages } = stubPagerLayout()
 
-    it('renders AppProvider and Analytics components', () => {
-      render(<App />)
-      // Since we start with 'trailheads' view by default in AppContext
-      expect(screen.getByTestId('trailhead-finder')).toBeInTheDocument()
-    })
+    // Landmarks is page 0, Trailheads page 1. Only the current page is active.
+    expect(pages[0]).toHaveAttribute('inert')
+    expect(pages[1]).not.toHaveAttribute('inert')
   })
 
-  describe('AppContent Component', () => {
-    it('renders landmarks view when currentView is landmarks', () => {
-      render(
-        <TestWrapper initialView="landmarks">
-          <AppContent />
-        </TestWrapper>
-      )
-      expect(screen.getByTestId('landmarks')).toBeInTheDocument()
-      expect(screen.queryByTestId('trailhead-finder')).not.toBeInTheDocument()
+  it('activates landmarks once the pager is scrolled to it', async () => {
+    render(<App />)
+    const { pager, pages } = stubPagerLayout()
+
+    pager.scrollLeft = 0
+    fireEvent.scroll(pager)
+
+    await waitFor(() => {
+      expect(pages[0]).not.toHaveAttribute('inert')
     })
-
-    it('renders trailheads view when currentView is trailheads', () => {
-      render(
-        <TestWrapper initialView="trailheads">
-          <AppContent />
-        </TestWrapper>
-      )
-      expect(screen.getByTestId('trailhead-finder')).toBeInTheDocument()
-      expect(screen.queryByTestId('landmarks')).not.toBeInTheDocument()
-    })
-
-    it('switches from trailheads to landmarks when back button is clicked', () => {
-      render(
-        <TestWrapper initialView="trailheads">
-          <AppContent />
-        </TestWrapper>
-      )
-
-      expect(screen.getByTestId('trailhead-finder')).toBeInTheDocument()
-
-      const backButton = screen.getByTestId('back-button')
-      fireEvent.click(backButton)
-
-      expect(screen.getByTestId('landmarks')).toBeInTheDocument()
-      expect(screen.queryByTestId('trailhead-finder')).not.toBeInTheDocument()
-    })
-
-    it('has correct CSS classes and touch event handlers', () => {
-      render(
-        <TestWrapper>
-          <AppContent />
-        </TestWrapper>
-      )
-
-      const appContent = screen.getByTestId('app-content')
-      expect(appContent).toHaveClass('min-h-screen', 'select-none')
-    })
+    expect(pages[1]).toHaveAttribute('inert')
   })
 
-  describe('Touch Swipe Functionality', () => {
+  it('keeps both views mounted across a view change', async () => {
+    // This is what lets a selection survive switching views.
+    render(<App />)
+    const { pager } = stubPagerLayout()
 
-    it('switches from landmarks to trailheads on left swipe', async () => {
-      render(
-        <TestWrapper initialView="landmarks">
-          <AppContent />
-        </TestWrapper>
-      )
+    pager.scrollLeft = 0
+    fireEvent.scroll(pager)
 
-      const appContent = screen.getByTestId('app-content')
+    await waitFor(() => {
       expect(screen.getByTestId('landmarks')).toBeInTheDocument()
-
-      // Simulate left swipe (start at 100, end at 40, distance = 60 > 50)
-      fireEvent.touchStart(appContent, {
-        targetTouches: [{ clientX: 100 }],
-      })
-      fireEvent.touchMove(appContent, {
-        targetTouches: [{ clientX: 40 }],
-      })
-      fireEvent.touchEnd(appContent)
-
-      // Wait for state update
-      expect(screen.getByTestId('trailhead-finder')).toBeInTheDocument()
-      expect(screen.queryByTestId('landmarks')).not.toBeInTheDocument()
     })
+    expect(screen.getByTestId('trailhead-finder')).toBeInTheDocument()
+  })
 
-    it('switches from trailheads to landmarks on right swipe', async () => {
-      render(
-        <TestWrapper initialView="trailheads">
-          <AppContent />
-        </TestWrapper>
-      )
+  it('gives each page an accessible name', () => {
+    render(<App />)
 
-      const appContent = screen.getByTestId('app-content')
-      expect(screen.getByTestId('trailhead-finder')).toBeInTheDocument()
-
-      // Simulate right swipe (start at 40, end at 100, distance = -60 < -50)
-      fireEvent.touchStart(appContent, {
-        targetTouches: [{ clientX: 40 }],
-      })
-      fireEvent.touchMove(appContent, {
-        targetTouches: [{ clientX: 100 }],
-      })
-      fireEvent.touchEnd(appContent)
-
-      // Wait for state update
-      await act(async () => {
-        // Allow React to process the state update
-      })
-
-      expect(screen.getByTestId('landmarks')).toBeInTheDocument()
-      expect(screen.queryByTestId('trailhead-finder')).not.toBeInTheDocument()
-    })
-
-    it('does not switch views on insufficient swipe distance', async () => {
-      render(
-        <TestWrapper initialView="landmarks">
-          <AppContent />
-        </TestWrapper>
-      )
-
-      const appContent = screen.getByTestId('app-content')
-      expect(screen.getByTestId('landmarks')).toBeInTheDocument()
-
-      // Simulate insufficient swipe (distance = 30 < 50)
-      fireEvent.touchStart(appContent, {
-        targetTouches: [{ clientX: 100 }],
-      })
-      fireEvent.touchMove(appContent, {
-        targetTouches: [{ clientX: 70 }],
-      })
-      fireEvent.touchEnd(appContent)
-
-      // Wait for potential state update
-      await act(async () => {
-        // Allow React to process any potential state update
-      })
-
-      // Should remain on landmarks view
-      expect(screen.getByTestId('landmarks')).toBeInTheDocument()
-      expect(screen.queryByTestId('trailhead-finder')).not.toBeInTheDocument()
-    })
-
-    it('does not switch views when swiping in wrong direction for current view', async () => {
-      render(
-        <TestWrapper initialView="landmarks">
-          <AppContent />
-        </TestWrapper>
-      )
-
-      const appContent = screen.getByTestId('app-content')
-      expect(screen.getByTestId('landmarks')).toBeInTheDocument()
-
-      // Simulate right swipe on landmarks view (should not switch)
-      fireEvent.touchStart(appContent, {
-        targetTouches: [{ clientX: 40 }],
-      })
-      fireEvent.touchMove(appContent, {
-        targetTouches: [{ clientX: 100 }],
-      })
-      fireEvent.touchEnd(appContent)
-
-      // Wait for potential state update
-      await act(async () => {
-        // Allow React to process any potential state update
-      })
-
-      // Should remain on landmarks view
-      expect(screen.getByTestId('landmarks')).toBeInTheDocument()
-      expect(screen.queryByTestId('trailhead-finder')).not.toBeInTheDocument()
-    })
+    expect(screen.getByRole('region', { name: 'Landmarks' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Trailheads' })).toBeInTheDocument()
   })
 })

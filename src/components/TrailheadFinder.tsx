@@ -1,225 +1,181 @@
-import React, { useEffect, useCallback } from 'react'
-import { trailheads } from '../data/trailheads'
-import type { Trailhead, TrailheadEntrance } from '../data/trailheads'
+import React, { useCallback, useMemo } from 'react'
 import { QRCodeDisplay } from './QRCodeDisplay'
-import { BrowserLink } from './BrowserLink'
-import {
-  buildGoogleMapsUrlWalking,
-  buildGoogleMapsUrlDriving,
-  buildGoogleMapsUrlPublicTransit
-} from '../utils/buildMapUrl'
-import { FaWalking, FaCar, FaBus, FaChevronLeft, FaSuitcase, FaQrcode, FaChevronDown, FaChevronUp } from 'react-icons/fa'
-import { useAppContext } from '../context/AppContext'
+import { AppShell } from './AppShell'
+import { TravelModeSwitch } from './TravelModeSwitch'
+import { ViewNav } from './ViewNav'
+import { PlacePicker } from './PlacePicker'
+import type { PickerItem } from './PlacePicker'
+import { DirectionsBar } from './DirectionsBar'
+import { trailheadPlaces } from '../utils/places'
+import { distanceMiles, formatMiles } from '../utils/geo'
+import { useRecents } from '../hooks/useRecents'
+import { useGeolocation } from '../hooks/useGeolocation'
+import { useMapProvider } from '../hooks/useMapProvider'
+import { buildDirectionsUrl } from '../utils/directions'
+import { QrIcon, ChevronDownIcon, ChevronUpIcon } from './icons'
+import { CopyButton } from './CopyButton'
+import { parseCoords } from '../utils/geo'
+import { useNavigation, useTrailheadState } from '../context/AppContext'
 
-interface Props {
-  onBack: () => void
-}
-
-export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
+export const TrailheadFinder: React.FC = () => {
   const {
-    trailheadTravelMode,
+    travelMode,
+    setTravelMode,
     selectedTrailhead,
-    selectedEntrance,
-    trailheadUrl,
-    isQRCodeVisible,
-    setTrailheadTravelMode,
     setSelectedTrailhead,
+    selectedEntrance,
     setSelectedEntrance,
-    setTrailheadUrl,
-    setIsQRCodeVisible
-  } = useAppContext()
+    isQRCodeVisible,
+    setIsQRCodeVisible,
+  } = useTrailheadState()
 
-  const handleTrailheadSelect = (trailhead: Trailhead) => {
-    setSelectedTrailhead(trailhead)
-    // Reset entrance selection when trailhead changes
-    setSelectedEntrance(null)
-  }
+  const { currentView, setCurrentView } = useNavigation()
+  const { recentIds, favoriteIds, pushRecent, toggleFavorite } = useRecents('trailheads')
+  const { coords: userCoords, status: locateStatus, request: locate } = useGeolocation()
+  const { provider, setProvider } = useMapProvider()
 
-  // Auto-select entrance if trailhead has only one entrance
-  useEffect(() => {
-    if (selectedTrailhead && selectedTrailhead.entrances.length === 1) {
-      setSelectedEntrance(selectedTrailhead.entrances[0])
+  const selectedId =
+    selectedTrailhead && selectedEntrance
+      ? `${selectedTrailhead.name}::${selectedEntrance.name}`
+      : null
+
+  /**
+   * Rows carry a distance once located, and fall back to the mile marker —
+   * which is how the roadside trailheads are signed anyway.
+   */
+  const items: PickerItem[] = useMemo(() => {
+    const withDistance = trailheadPlaces.map((place) => {
+      const miles = userCoords && place.coords ? distanceMiles(userCoords, place.coords) : null
+      return {
+        miles,
+        item: {
+          id: place.id,
+          title: place.title,
+          subtitle: place.subtitle,
+          meta:
+            miles !== null
+              ? formatMiles(miles)
+              : place.milemarker
+                ? `MM ${place.milemarker}`
+                : undefined,
+        } satisfies PickerItem,
+      }
+    })
+
+    if (userCoords) {
+      // Entries without coordinates sort last rather than jumbling the order.
+      withDistance.sort((a, b) => (a.miles ?? Infinity) - (b.miles ?? Infinity))
     }
-  }, [selectedTrailhead, setSelectedEntrance])
 
-  const handleEntranceSelect = (entrance: TrailheadEntrance) => {
-    setSelectedEntrance(entrance)
-  }
+    return withDistance.map((entry) => entry.item)
+  }, [userCoords])
 
-  const generateUrl = useCallback((entrance: TrailheadEntrance, mode: typeof trailheadTravelMode) => {
-    switch (mode) {
-      case 'driving':
-        return buildGoogleMapsUrlDriving(entrance.query)
-      case 'transit':
-        return buildGoogleMapsUrlPublicTransit(entrance.query)
-      case 'walking':
-      default:
-        return buildGoogleMapsUrlWalking(entrance.query)
-    }
-  }, [])
+  const handleSelect = useCallback(
+    (id: string) => {
+      const place = trailheadPlaces.find((candidate) => candidate.id === id)
+      if (!place) return
+      setSelectedTrailhead(place.trailhead)
+      setSelectedEntrance(place.entrance)
+      pushRecent(id)
+    },
+    [setSelectedTrailhead, setSelectedEntrance, pushRecent]
+  )
 
-  useEffect(() => {
-    if (selectedEntrance) {
-      const url = generateUrl(selectedEntrance, trailheadTravelMode)
-      setTrailheadUrl(url)
-    }
-  }, [selectedEntrance, generateUrl, trailheadTravelMode, setTrailheadUrl])
+  const selectedCoords = selectedEntrance ? parseCoords(selectedEntrance.query) : null
 
-
-
-  const handleTravelModeChange = (mode: typeof trailheadTravelMode) => {
-    setTrailheadTravelMode(mode)
-  }
+  // Derived, not stored: a pure function of the selection, mode, and provider.
+  const url = selectedEntrance
+    ? buildDirectionsUrl(provider, selectedEntrance.query, travelMode)
+    : null
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="bg-gray-900 shadow-xl rounded-2xl p-6 w-full max-w-md space-y-6 relative">
-          <h1 className="text-3xl font-extrabold text-center text-white">Trailheads</h1>
+    <AppShell
+      title="Trailheads"
+      footer={
+        <>
+          {url && (
+            <DirectionsBar
+              url={url}
+              provider={provider}
+              onSwitchProvider={setProvider}
+              shareTitle={selectedTrailhead?.name}
+            />
+          )}
+          <TravelModeSwitch value={travelMode} onChange={setTravelMode} />
+          <ViewNav target="landmarks" onNavigate={() => setCurrentView('landmarks')} />
+        </>
+      }
+    >
+      <PlacePicker
+        label="Trailhead"
+        placeholder="Select a trailhead..."
+        items={items}
+        selectedId={selectedId}
+        onSelect={handleSelect}
+        recentIds={recentIds}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={toggleFavorite}
+        onLocate={locate}
+        locateStatus={locateStatus}
+      />
 
-          <div className="flex justify-center gap-4">
-            <button
-              aria-label="Walking"
-              onClick={() => handleTravelModeChange('walking')}
-              className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
-                trailheadTravelMode === 'walking'
-                  ? 'bg-emerald-500 text-white border-emerald-500'
-                  : 'text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white'
-              }`}
-            >
-              <FaWalking />
-            </button>
-            <button
-              aria-label="Public Transit"
-              onClick={() => handleTravelModeChange('transit')}
-              className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
-                trailheadTravelMode === 'transit'
-                  ? 'bg-emerald-500 text-white border-emerald-500'
-                  : 'text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white'
-              }`}
-            >
-              <FaBus />
-            </button>
-            <button
-              aria-label="Driving"
-              onClick={() => handleTravelModeChange('driving')}
-              className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
-                trailheadTravelMode === 'driving'
-                  ? 'bg-emerald-500 text-white border-emerald-500'
-                  : 'text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white'
-              }`}
-            >
-              <FaCar />
-            </button>
-          </div>
-
-          <label htmlFor="trailhead-select" className="sr-only">Trailhead</label>
-          <select
-            id="trailhead-select"
-            className="w-full border border-gray-700 bg-gray-800 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            onChange={(e) => {
-              const selected = trailheads.find(t => t.name === e.target.value)
-              if (selected) handleTrailheadSelect(selected)
-            }}
-            value={selectedTrailhead?.name || ""}
-            title="Trailhead"
-          >
-            <option value="" disabled>Select a trailhead...</option>
-            {trailheads.map(trailhead => (
-              <option key={trailhead.name} value={trailhead.name}>
-                {trailhead.name}
-              </option>
-            ))}
-          </select>
-
-          {/* Show entrance selection if trailhead has multiple entrances */}
-          {selectedTrailhead && selectedTrailhead.entrances.length > 1 && (
+      {selectedEntrance && (
+        <div className="reveal space-y-1 rounded-control bg-surface p-4">
+          {selectedEntrance.milemarker && (
+            <p className="text-sm text-ink-muted">
+              <span className="font-semibold">Mile Marker:</span> {selectedEntrance.milemarker}
+            </p>
+          )}
+          {selectedEntrance.notes && (
+            <p className="text-sm text-ink-muted">
+              <span className="block font-semibold">Notes:</span> {selectedEntrance.notes}
+            </p>
+          )}
+          {selectedCoords && (
             <>
-              <label htmlFor="entrance-select" className="sr-only">Entrance</label>
-              <select
-                id="entrance-select"
-                className="w-full border border-gray-700 bg-gray-800 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                onChange={(e) => {
-                  const selected = selectedTrailhead.entrances.find(entrance => entrance.name === e.target.value)
-                  if (selected) handleEntranceSelect(selected)
-                }}
-                value={selectedEntrance?.name || ""}
-                title="Entrance"
-              >
-                <option value="" disabled>Select an entrance...</option>
-                {selectedTrailhead.entrances.map(entrance => (
-                  <option key={entrance.name} value={entrance.name}>
-                    {entrance.name}
-                  </option>
-                ))}
-              </select>
+              <p className="pt-1 font-mono text-sm tabular-nums text-ink-faint">
+                {selectedCoords.lat.toFixed(6)}, {selectedCoords.lng.toFixed(6)}
+              </p>
+              <CopyButton
+                value={`${selectedCoords.lat}, ${selectedCoords.lng}`}
+                label={`Copy coordinates for ${selectedTrailhead?.name ?? 'this trailhead'}`}
+              />
             </>
           )}
-
-
-
-          {selectedEntrance && (
-            <div className="bg-gray-800 rounded-lg p-4 space-y-1">
-              {selectedEntrance.milemarker && selectedEntrance.milemarker !== null && (
-                <p className="text-sm text-gray-300">
-                  <span className="font-semibold">Mile Marker:</span> {selectedEntrance.milemarker}
-                </p>
-              )}
-              {selectedEntrance.notes && selectedEntrance.notes !== null && (
-                <p className="text-sm text-gray-300">
-                  <span className="font-semibold block">Notes:</span> {selectedEntrance.notes}
-                </p>
-              )}
-              {trailheadUrl && (
-                <div className="pt-2">
-                  <BrowserLink url={trailheadUrl} />
-                </div>
-              )}
-            </div>
-          )}
-
-          {trailheadUrl && (
-            <div className="space-y-2">
-              <button
-                onClick={() => setIsQRCodeVisible(!isQRCodeVisible)}
-                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors duration-200"
-                aria-label={isQRCodeVisible ? "Hide QR Code" : "Show QR Code"}
-              >
-                <FaQrcode className="text-sm" />
-                <span className="text-sm">QR Code</span>
-                {isQRCodeVisible ? <FaChevronUp className="text-xs" /> : <FaChevronDown className="text-xs" />}
-              </button>
-              {isQRCodeVisible && <QRCodeDisplay url={trailheadUrl} size={128} />}
-            </div>
-          )}
-
-          {/* Arrow button for larger screens */}
-          <button
-            onClick={onBack}
-            className="hidden lg:block absolute -left-8 lg:-left-24 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors duration-200"
-            aria-label="Back to Landmarks"
-          >
-            <div className="flex items-center gap-1 lg:gap-2">
-              <FaChevronLeft className="text-2xl lg:text-4xl" />
-              <FaSuitcase className="text-lg lg:text-2xl" />
-            </div>
-          </button>
         </div>
-      </div>
+      )}
 
-      {/* Mobile navigation button - positioned in reserved space */}
-      <div className="lg:hidden p-6 text-center">
-        <button
-          onClick={onBack}
-          className="text-gray-400 hover:text-white transition-colors duration-200"
-          aria-label="Back to Landmarks"
-        >
-          <div className="flex items-center gap-2 justify-center">
-            <FaChevronLeft className="text-2xl" />
-            <FaSuitcase className="text-lg" />
-          </div>
-        </button>
-      </div>
-    </div>
+      {url && (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setIsQRCodeVisible(!isQRCodeVisible)}
+            className="flex min-h-tap items-center gap-2 text-ink-muted transition-colors duration-200 hover:text-ink"
+            aria-label={isQRCodeVisible ? 'Hide QR Code' : 'Show QR Code'}
+            aria-expanded={isQRCodeVisible}
+          >
+            <QrIcon className="size-4" />
+            <span className="text-sm">QR Code</span>
+            {isQRCodeVisible ? (
+              <ChevronUpIcon className="size-3" />
+            ) : (
+              <ChevronDownIcon className="size-3" />
+            )}
+          </button>
+          {isQRCodeVisible && (
+            <div className="reveal-collapse">
+              <QRCodeDisplay
+                url={url}
+                size={192}
+                active={currentView === 'trailheads'}
+                title={selectedTrailhead?.name}
+                subtitle={selectedEntrance?.name}
+                mode={travelMode}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </AppShell>
   )
 }

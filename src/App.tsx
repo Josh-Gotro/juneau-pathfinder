@@ -1,52 +1,99 @@
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { Landmarks } from './components/Landmarks'
 import { TrailheadFinder } from './components/TrailheadFinder'
-import { AppProvider, useAppContext } from './context/AppContext'
+import { PagerProgress } from './components/PagerProgress'
+import { AppProvider, useNavigation } from './context/AppContext'
+import type { ViewName } from './context/AppContext'
 import { Analytics } from '@vercel/analytics/react'
 
+const VIEWS: ViewName[] = ['landmarks', 'trailheads']
+
+/**
+ * Both views live side by side in a scroll-snap pager.
+ *
+ * The previous implementation resolved a swipe only on touchend, so nothing
+ * moved under your finger and there was no way to abort a swipe you started by
+ * accident. Native scroll gives momentum, rubber-banding at the edges, and
+ * mid-gesture reversal for free — and no gesture code to maintain.
+ *
+ * Keeping both mounted also means switching views no longer discards your
+ * selection or pays a remount.
+ */
 const AppContent: React.FC = () => {
-  const { currentView, setCurrentView } = useAppContext()
-  const [touchStart, setTouchStart] = useState<number | null>(null)
-  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const { currentView, setCurrentView } = useNavigation()
+  const pagerRef = useRef<HTMLDivElement>(null)
+  const pageRefs = useRef<Partial<Record<ViewName, HTMLElement | null>>>({})
 
-  // Minimum swipe distance (in px)
-  const minSwipeDistance = 50
+  const setPageRef = useCallback(
+    (view: ViewName) => (element: HTMLElement | null) => {
+      pageRefs.current[view] = element
+    },
+    []
+  )
 
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null)
-    setTouchStart(e.targetTouches[0].clientX)
-  }
+  // Land on the default view without animating in from the side.
+  useLayoutEffect(() => {
+    const pager = pagerRef.current
+    const page = pageRefs.current[currentView]
+    if (pager && page) pager.scrollLeft = page.offsetLeft
+    // Mount only — later changes are handled by the effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX)
-  }
+  // Tapping the nav control scrolls the pager.
+  useEffect(() => {
+    const pager = pagerRef.current
+    const page = pageRefs.current[currentView]
+    if (!pager || !page) return
+    if (Math.abs(pager.scrollLeft - page.offsetLeft) < 4) return
+    pager.scrollTo({ left: page.offsetLeft, behavior: 'smooth' })
+  }, [currentView])
 
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return
-    const distance = touchStart - touchEnd
-    const isLeftSwipe = distance > minSwipeDistance
-    const isRightSwipe = distance < -minSwipeDistance
+  // Swiping updates which view is considered current.
+  useEffect(() => {
+    const pager = pagerRef.current
+    if (!pager) return
 
-    if (isLeftSwipe && currentView === 'landmarks') {
-      setCurrentView('trailheads')
-    } else if (isRightSwipe && currentView === 'trailheads') {
-      setCurrentView('landmarks')
+    let frame = 0
+    const handleScroll = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => {
+        if (pager.clientWidth === 0) return
+        const next = VIEWS[Math.round(pager.scrollLeft / pager.clientWidth)]
+        if (next && next !== currentView) setCurrentView(next)
+      })
     }
-  }
+
+    pager.addEventListener('scroll', handleScroll, { passive: true })
+    return () => {
+      pager.removeEventListener('scroll', handleScroll)
+      cancelAnimationFrame(frame)
+    }
+  }, [currentView, setCurrentView])
 
   return (
-    <div
-      className="min-h-screen select-none"
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-    >
-      {currentView === 'landmarks' ? (
-        <Landmarks />
-      ) : (
-        <TrailheadFinder onBack={() => setCurrentView('landmarks')} />
-      )}
-    </div>
+    <>
+      <div ref={pagerRef} className="pager" data-testid="pager">
+        <section
+          ref={setPageRef('landmarks')}
+          className="pager-page"
+          aria-label="Landmarks"
+          inert={currentView !== 'landmarks'}
+        >
+          <Landmarks />
+        </section>
+        <section
+          ref={setPageRef('trailheads')}
+          className="pager-page"
+          aria-label="Trailheads"
+          inert={currentView !== 'trailheads'}
+        >
+          <TrailheadFinder />
+        </section>
+      </div>
+
+      <PagerProgress views={VIEWS} current={currentView} />
+    </>
   )
 }
 

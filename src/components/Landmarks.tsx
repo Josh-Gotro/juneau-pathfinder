@@ -1,149 +1,103 @@
-import React, { useEffect } from 'react'
-import { destinations } from '../data/destinations'
-import type { Destination } from '../data/destinations'
+import React, { useCallback, useMemo } from 'react'
 import { QRCodeDisplay } from './QRCodeDisplay'
-import { BrowserLink } from './BrowserLink'
-import {
-  buildGoogleMapsUrlWalking,
-  buildGoogleMapsUrlDriving,
-  buildGoogleMapsUrlPublicTransit
-} from '../utils/buildMapUrl'
-import { FaWalking, FaCar, FaBus, FaChevronRight, FaMap } from 'react-icons/fa'
-import { useAppContext } from '../context/AppContext'
+import { AppShell } from './AppShell'
+import { TravelModeSwitch } from './TravelModeSwitch'
+import { ViewNav } from './ViewNav'
+import { PlacePicker } from './PlacePicker'
+import type { PickerItem } from './PlacePicker'
+import { DirectionsBar } from './DirectionsBar'
+import { landmarkPlaces } from '../utils/places'
+import { distanceMiles, formatMiles } from '../utils/geo'
+import { useRecents } from '../hooks/useRecents'
+import { useGeolocation } from '../hooks/useGeolocation'
+import { useMapProvider } from '../hooks/useMapProvider'
+import { buildDirectionsUrl } from '../utils/directions'
+import { useLandmarksState, useNavigation } from '../context/AppContext'
 
 export const Landmarks: React.FC = () => {
-  const {
-    pathfinderTravelMode,
-    selectedPathfinderDestination,
-    pathfinderUrl,
-    setPathfinderTravelMode,
-    setSelectedPathfinderDestination,
-    setPathfinderUrl,
-    setCurrentView
-  } = useAppContext()
+  const { travelMode, setTravelMode, selectedDestination, setSelectedDestination } =
+    useLandmarksState()
+  const { currentView, setCurrentView } = useNavigation()
 
-  const handleSelect = (dest: Destination) => {
-    setSelectedPathfinderDestination(dest)
-  }
+  const { recentIds, favoriteIds, pushRecent, toggleFavorite } = useRecents('landmarks')
+  const { coords: userCoords, status: locateStatus, request: locate } = useGeolocation()
+  const { provider, setProvider } = useMapProvider()
 
-  const generateUrl = (dest: Destination, mode: typeof pathfinderTravelMode) => {
-    switch (mode) {
-      case 'driving':
-        return buildGoogleMapsUrlDriving(dest.query)
-      case 'transit':
-        return buildGoogleMapsUrlPublicTransit(dest.query)
-      case 'walking':
-      default:
-        return buildGoogleMapsUrlWalking(dest.query)
+  const items: PickerItem[] = useMemo(() => {
+    const withDistance = landmarkPlaces.map((place) => {
+      const miles = userCoords && place.coords ? distanceMiles(userCoords, place.coords) : null
+      return {
+        miles,
+        item: {
+          id: place.id,
+          title: place.title,
+          meta: miles !== null ? formatMiles(miles) : undefined,
+        } satisfies PickerItem,
+      }
+    })
+
+    if (userCoords) {
+      withDistance.sort((a, b) => (a.miles ?? Infinity) - (b.miles ?? Infinity))
     }
-  }
 
-  useEffect(() => {
-    if (selectedPathfinderDestination) {
-      const url = generateUrl(selectedPathfinderDestination, pathfinderTravelMode)
-      setPathfinderUrl(url)
-    }
-  }, [selectedPathfinderDestination, pathfinderTravelMode, setPathfinderUrl])
+    return withDistance.map((entry) => entry.item)
+  }, [userCoords])
 
-  const handleTravelModeChange = (mode: typeof pathfinderTravelMode) => {
-    setPathfinderTravelMode(mode)
-  }
+  const handleSelect = useCallback(
+    (id: string) => {
+      const place = landmarkPlaces.find((candidate) => candidate.id === id)
+      if (!place) return
+      setSelectedDestination(place.destination)
+      pushRecent(id)
+    },
+    [setSelectedDestination, pushRecent]
+  )
+
+  // Derived, not stored: a pure function of the selection, mode, and provider.
+  const url = selectedDestination
+    ? buildDirectionsUrl(provider, selectedDestination.query, travelMode)
+    : null
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="bg-gray-900 shadow-xl rounded-2xl p-6 w-full max-w-md space-y-6 relative">
-          <h1 className="text-3xl font-extrabold text-center text-white">Landmarks</h1>
-
-          <div className="flex justify-center gap-4">
-            <button
-              aria-label="Walking"
-              onClick={() => handleTravelModeChange('walking')}
-              className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
-                pathfinderTravelMode === 'walking'
-                  ? 'bg-emerald-500 text-white border-emerald-500'
-                  : 'text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white'
-              }`}
-            >
-              <FaWalking />
-            </button>
-            <button
-              aria-label="Public Transit"
-              onClick={() => handleTravelModeChange('transit')}
-              className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
-                pathfinderTravelMode === 'transit'
-                  ? 'bg-emerald-500 text-white border-emerald-500'
-                  : 'text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white'
-              }`}
-            >
-              <FaBus />
-            </button>
-            <button
-              aria-label="Driving"
-              onClick={() => handleTravelModeChange('driving')}
-              className={`text-xl p-2 rounded-full border transition-colors duration-200 ${
-                pathfinderTravelMode === 'driving'
-                  ? 'bg-emerald-500 text-white border-emerald-500'
-                  : 'text-gray-400 border-gray-600 hover:bg-gray-700 hover:text-white'
-              }`}
-            >
-              <FaCar />
-            </button>
-          </div>
-
-          <label htmlFor="destination-select" className="sr-only">Destination</label>
-          <select
-            id="destination-select"
-            className="w-full border border-gray-700 bg-gray-800 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-            onChange={(e) => {
-              const selected = destinations.find(d => d.name === e.target.value)
-              if (selected) handleSelect(selected)
-            }}
-            value={selectedPathfinderDestination?.name || ""}
-            title="Destination"
-          >
-            <option value="" disabled>Select a destination...</option>
-            {destinations.map(dest => (
-              <option key={dest.name} value={dest.name}>{dest.name}</option>
-            ))}
-          </select>
-
-          {pathfinderUrl && (
-            <>
-              <QRCodeDisplay url={pathfinderUrl} />
-              <div className="text-center">
-                <BrowserLink url={pathfinderUrl} />
-              </div>
-            </>
+    <AppShell
+      title="Landmarks"
+      footer={
+        <>
+          {url && (
+            <DirectionsBar
+              url={url}
+              provider={provider}
+              onSwitchProvider={setProvider}
+              shareTitle={selectedDestination?.name}
+            />
           )}
+          <TravelModeSwitch value={travelMode} onChange={setTravelMode} />
+          <ViewNav target="trailheads" onNavigate={() => setCurrentView('trailheads')} />
+        </>
+      }
+    >
+      <PlacePicker
+        label="Destination"
+        placeholder="Select a destination..."
+        items={items}
+        selectedId={selectedDestination?.name ?? null}
+        onSelect={handleSelect}
+        recentIds={recentIds}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={toggleFavorite}
+        onLocate={locate}
+        locateStatus={locateStatus}
+      />
 
-          {/* Arrow button for larger screens */}
-          <button
-            onClick={() => setCurrentView('trailheads')}
-            className="hidden lg:block absolute -right-8 lg:-right-24 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors duration-200"
-            aria-label="Go to Trailhead Finder"
-          >
-            <div className="flex items-center gap-1 lg:gap-2">
-              <FaMap className="text-lg lg:text-4xl" />
-              <FaChevronRight className="text-2xl lg:text-4xl" />
-            </div>
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile navigation button - positioned in reserved space */}
-      <div className="lg:hidden p-6 text-center">
-        <button
-          onClick={() => setCurrentView('trailheads')}
-          className="text-gray-400 hover:text-white transition-colors duration-200"
-          aria-label="Go to Trailhead Finder"
-        >
-          <div className="flex items-center gap-2 justify-center">
-            <FaMap className="text-lg" />
-            <FaChevronRight className="text-2xl" />
-          </div>
-        </button>
-      </div>
-    </div>
+      {url && (
+        <QRCodeDisplay
+          className="reveal"
+          url={url}
+          title={selectedDestination?.name}
+          mode={travelMode}
+          active={currentView === 'landmarks'}
+        />
+      )}
+    </AppShell>
   )
 }

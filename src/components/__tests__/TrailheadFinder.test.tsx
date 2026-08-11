@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { TrailheadFinder } from '../TrailheadFinder'
-import { AppProvider } from '../../context/AppContext'
+import { AppProvider, useNavigation } from '../../context/AppContext'
 import { trailheadPlaces } from '../../utils/places'
 
 // Mock the child components
@@ -20,17 +20,27 @@ jest.mock('../../utils/buildMapUrl', () => ({
   buildGoogleMapsUrlPublicTransit: jest.fn((query) => `https://maps.google.com/transit/${query}`),
 }))
 
-const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <AppProvider>{children}</AppProvider>
+/** Surfaces navigation state so it can be asserted on directly. */
+const ViewProbe: React.FC = () => {
+  const { currentView } = useNavigation()
+  return <span data-testid="current-view">{currentView}</span>
 }
 
-const renderFinder = (onBack = jest.fn()) => {
+const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <AppProvider>
+      {children}
+      <ViewProbe />
+    </AppProvider>
+  )
+}
+
+const renderFinder = () => {
   render(
     <TestWrapper>
-      <TrailheadFinder onBack={onBack} />
+      <TrailheadFinder />
     </TestWrapper>
   )
-  return { onBack }
 }
 
 /** Open the picker sheet. */
@@ -292,12 +302,13 @@ describe('TrailheadFinder', () => {
   })
 
   describe('Navigation', () => {
-    it('calls onBack when back button is clicked', () => {
-      const { onBack } = renderFinder()
+    it('navigates to landmarks when the nav control is used', () => {
+      renderFinder()
+      expect(screen.getByTestId('current-view')).toHaveTextContent('trailheads')
 
       fireEvent.click(screen.getByLabelText('Back to Landmarks'))
 
-      expect(onBack).toHaveBeenCalledTimes(1)
+      expect(screen.getByTestId('current-view')).toHaveTextContent('landmarks')
     })
   })
 

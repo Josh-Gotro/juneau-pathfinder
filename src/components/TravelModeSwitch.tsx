@@ -1,6 +1,7 @@
 import React from 'react'
 import { WalkingIcon, BusIcon, CarIcon } from './icons'
 import type { TravelMode } from '../context/AppContext'
+import { tap } from '../utils/haptics'
 
 const MODES = [
   { mode: 'walking', label: 'Walking', Icon: WalkingIcon },
@@ -29,7 +30,10 @@ export const TravelModeSwitch: React.FC<Props> = ({ value, onChange }) => (
           role="radio"
           aria-checked={active}
           aria-label={label}
-          onClick={() => onChange(mode)}
+          onClick={() => {
+            tap()
+            onChange(mode)
+          }}
           className={`flex min-h-tap items-center justify-center rounded-control border text-xl transition-colors duration-200 ${
             active
               ? 'border-accent bg-accent text-accent-ink'

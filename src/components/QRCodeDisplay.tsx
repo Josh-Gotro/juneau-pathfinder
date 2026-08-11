@@ -16,14 +16,28 @@ interface Props {
   title?: string
   subtitle?: string
   mode?: TravelMode
+  /**
+   * Whether this code is on the page currently in view. Both pager pages stay
+   * mounted, so without this the offscreen view would hold a wake lock too.
+   */
+  active?: boolean
+  className?: string
 }
 
-export const QRCodeDisplay: React.FC<Props> = ({ url, size = 256, title, subtitle, mode }) => {
+export const QRCodeDisplay: React.FC<Props> = ({
+  url,
+  size = 256,
+  title,
+  subtitle,
+  mode,
+  active = true,
+  className = '',
+}) => {
   // Held out to a stranger — the screen must not sleep mid-handoff.
-  useWakeLock(true)
+  useWakeLock(active)
 
   return (
-    <div className="flex flex-col items-center gap-3 text-center">
+    <div className={`flex flex-col items-center gap-3 text-center ${className}`}>
       {/*
         Always white with a generous quiet zone, regardless of app theme.
         Scanners need the light module to be genuinely light, and the border

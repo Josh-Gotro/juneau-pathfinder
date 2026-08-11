@@ -11,33 +11,86 @@
    the accent rather than as default grey.
 --------------------------------------------------------------------------- */
 
+/*
+ * Light is the bare :root default, dark arrives via the media query, and the
+ * [data-theme] blocks let an explicit choice beat the OS in both directions.
+ * Nothing but these blocks may declare a colour — components read tokens only,
+ * so a value defined solely inside one theme can never leak into the other.
+ */
+
 :root {
+  color-scheme: light;
+
+  /* Makes the pager's named timeline reachable by the progress rail. */
+  timeline-scope: --pager-scroll;
+
+  /* Grounds and surfaces, lightest to darkest */
+  --ground: oklch(0.98 0.004 165);
+  --surface: oklch(0.95 0.006 165);
+  --surface-raised: oklch(0.91 0.008 165);
+
+  /* Lines */
+  --edge: oklch(0.86 0.01 165);
+  --edge-strong: oklch(0.72 0.014 165);
+
+  /* Text */
+  --ink: oklch(0.22 0.012 165);
+  --ink-muted: oklch(0.44 0.016 165);
+  --ink-faint: oklch(0.56 0.014 165);
+
+  /* Accent — one hue, every state derived from it. Darker than the dark
+     theme's so that light text on top still clears contrast. */
+  --accent: oklch(0.52 0.13 165);
+  --accent-ink: oklch(0.99 0.005 165);
+
+  /* Focus ring reuses the accent so there is one visual language for "live" */
+  --ring: var(--accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --ground: oklch(0.16 0.008 165);
+    --surface: oklch(0.21 0.01 165);
+    --surface-raised: oklch(0.26 0.011 165);
+
+    --edge: oklch(0.32 0.012 165);
+    --edge-strong: oklch(0.42 0.014 165);
+
+    --ink: oklch(0.97 0.005 165);
+    --ink-muted: oklch(0.74 0.015 165);
+    --ink-faint: oklch(0.58 0.014 165);
+
+    --accent: oklch(0.7 0.15 165);
+    --accent-ink: oklch(0.18 0.03 165);
+  }
+}
+
+:root[data-theme='dark'] {
   color-scheme: dark;
 
-  /* Grounds and surfaces, darkest to lightest */
   --ground: oklch(0.16 0.008 165);
   --surface: oklch(0.21 0.01 165);
   --surface-raised: oklch(0.26 0.011 165);
 
-  /* Lines */
   --edge: oklch(0.32 0.012 165);
   --edge-strong: oklch(0.42 0.014 165);
 
-  /* Text */
   --ink: oklch(0.97 0.005 165);
   --ink-muted: oklch(0.74 0.015 165);
   --ink-faint: oklch(0.58 0.014 165);
 
-  /* Accent — one hue, every state derived from it */
   --accent: oklch(0.7 0.15 165);
   --accent-ink: oklch(0.18 0.03 165);
+}
+
+/* Derived from whichever --accent won above, so these need declaring once. */
+:root {
   --accent-hover: color-mix(in oklch, var(--accent), white 12%);
   --accent-active: color-mix(in oklch, var(--accent), black 10%);
   --accent-quiet: color-mix(in oklch, var(--accent), transparent 85%);
   --accent-edge: color-mix(in oklch, var(--accent), transparent 55%);
-
-  /* Focus ring reuses the accent so there is one visual language for "live" */
-  --ring: var(--accent);
 }
 
 @theme inline {
@@ -86,6 +139,88 @@
   @container shell (width >= 48rem) {
     .shell-card {
       margin-block: auto;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Pager
+   ---------------------------------------------------------------------------
+   Two full-width pages side by side, snapped. Native scroll supplies the
+   momentum, the rubber band at the edges, and mid-gesture reversal that a
+   touchend-only handler could never produce.
+--------------------------------------------------------------------------- */
+
+@layer components {
+  .pager {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 100%;
+    height: 100dvh;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    /* Stop a horizontal flick from becoming a browser back-navigation. */
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    /* Published for the progress rail, which is not a descendant. */
+    scroll-timeline: --pager-scroll x;
+  }
+
+  .pager::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pager-page {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    min-width: 0;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .pager-progress {
+    position: fixed;
+    top: env(safe-area-inset-top);
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 20;
+    overflow: hidden;
+    background: color-mix(in oklch, var(--edge), transparent 45%);
+    pointer-events: none;
+  }
+
+  .pager-progress-bar {
+    height: 100%;
+    width: calc(100% / var(--pager-count, 2));
+    border-radius: 999px;
+    background: var(--accent);
+    /* Fallback where scroll-linked animation is unavailable: driven by state. */
+    translate: calc(var(--pager-index, 0) * 100%) 0;
+    transition: translate 220ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  /*
+   * The pager is a nested scroller and the rail is not inside it, so the
+   * timeline is named on the scroller and made visible to the rail through
+   * timeline-scope on the root. A bare scroll() would have resolved to the
+   * document, which never scrolls here.
+   */
+  @supports (animation-timeline: --x) {
+    .pager-progress-bar {
+      transition: none;
+      animation: pager-progress linear both;
+      animation-timeline: --pager-scroll;
+    }
+
+    @keyframes pager-progress {
+      from {
+        translate: 0 0;
+      }
+      to {
+        translate: calc((var(--pager-count, 2) - 1) * 100%) 0;
+      }
     }
   }
 }
@@ -165,6 +300,76 @@
   .place-sheet input[type='search']::-webkit-search-decoration,
   .place-sheet input[type='search']::-webkit-search-cancel-button {
     appearance: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Theme transition
+   ---------------------------------------------------------------------------
+   The default cross-fade is replaced by a circle growing from the toggle,
+   animated in ThemeToggle. Both snapshots must stop animating themselves or
+   they fight the clip-path, and the incoming one has to sit on top for the
+   circle to reveal anything.
+--------------------------------------------------------------------------- */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2;
+}
+
+/* ---------------------------------------------------------------------------
+   Reveals
+   ---------------------------------------------------------------------------
+   Entry and exit animation for content that appears and disappears, with no
+   mount choreography. @starting-style supplies the "before it existed" state;
+   allow-discrete keeps the element around long enough to animate out.
+--------------------------------------------------------------------------- */
+
+@layer components {
+  .reveal {
+    transition:
+      opacity 200ms ease,
+      translate 240ms cubic-bezier(0.32, 0.72, 0, 1);
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  @starting-style {
+    .reveal {
+      opacity: 0;
+      translate: 0 -0.4rem;
+    }
+  }
+
+  /*
+   * The QR collapse animates to its intrinsic height thanks to
+   * interpolate-size: allow-keywords on the root — no ResizeObserver, no
+   * measuring, no fixed max-height guess to outgrow.
+   */
+  .reveal-collapse {
+    display: grid;
+    overflow: hidden;
+    block-size: auto;
+    opacity: 1;
+    transition:
+      block-size 260ms cubic-bezier(0.32, 0.72, 0, 1),
+      opacity 180ms ease;
+  }
+
+  @starting-style {
+    .reveal-collapse {
+      block-size: 0;
+      opacity: 0;
+    }
   }
 }
 

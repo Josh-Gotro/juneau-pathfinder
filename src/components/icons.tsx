@@ -128,6 +128,35 @@ export const DirectionsIcon: React.FC<IconProps> = (props) => (
   </Icon>
 )
 
+export const SunIcon: React.FC<IconProps> = (props) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="4.2" />
+    <path d="M12 2.6v2.2M12 19.2v2.2M4.2 12H2M22 12h-2.2M6.5 6.5L4.9 4.9M19.1 19.1l-1.6-1.6M17.5 6.5l1.6-1.6M4.9 19.1l1.6-1.6" />
+  </Icon>
+)
+
+export const MoonIcon: React.FC<IconProps> = (props) => (
+  <Icon {...props}>
+    <path d="M20.4 14.2A8.6 8.6 0 019.8 3.6a8.6 8.6 0 1010.6 10.6z" />
+  </Icon>
+)
+
+export const CopyIcon: React.FC<IconProps> = (props) => (
+  <Icon {...props}>
+    <rect x="9" y="9" width="11.5" height="11.5" rx="2.2" />
+    <path d="M15 9V5.5a2 2 0 00-2-2H5.5a2 2 0 00-2 2V13a2 2 0 002 2H9" />
+  </Icon>
+)
+
+export const OfflineIcon: React.FC<IconProps> = (props) => (
+  <Icon {...props}>
+    <path d="M3 3l18 18" />
+    <path d="M6.4 10.6a8.5 8.5 0 013.1-2M14.6 8.9a8.5 8.5 0 013 1.7" />
+    <path d="M9.2 14a4.6 4.6 0 011.6-1M13.4 13.2a4.6 4.6 0 011.4.8" />
+    <path d="M12 18.2h.01" />
+  </Icon>
+)
+
 export const ShareIcon: React.FC<IconProps> = (props) => (
   <Icon {...props}>
     <circle cx="17.5" cy="5.6" r="2.6" />

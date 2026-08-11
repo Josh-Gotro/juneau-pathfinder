@@ -49,8 +49,22 @@ const NavigationContext = createContext<NavigationValue | undefined>(undefined)
 const LandmarksContext = createContext<LandmarksValue | undefined>(undefined)
 const TrailheadContext = createContext<TrailheadValue | undefined>(undefined)
 
+/**
+ * Honours the `?view=` parameter used by the manifest's home-screen shortcuts.
+ * Trailheads is the default: it is the reason the app gets opened most days.
+ */
+const initialView = (): ViewName => {
+  try {
+    const requested = new URLSearchParams(window.location.search).get('view')
+    if (requested === 'landmarks' || requested === 'trailheads') return requested
+  } catch {
+    // No location available; fall through.
+  }
+  return 'trailheads'
+}
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentView, setCurrentView] = useState<ViewName>('trailheads')
+  const [currentView, setCurrentView] = useState<ViewName>(initialView)
 
   const [landmarksTravelMode, setLandmarksTravelMode] = useState<TravelMode>('walking')
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null)

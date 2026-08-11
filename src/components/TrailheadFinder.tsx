@@ -13,13 +13,11 @@ import { useGeolocation } from '../hooks/useGeolocation'
 import { useMapProvider } from '../hooks/useMapProvider'
 import { buildDirectionsUrl } from '../utils/directions'
 import { QrIcon, ChevronDownIcon, ChevronUpIcon } from './icons'
-import { useTrailheadState } from '../context/AppContext'
+import { CopyButton } from './CopyButton'
+import { parseCoords } from '../utils/geo'
+import { useNavigation, useTrailheadState } from '../context/AppContext'
 
-interface Props {
-  onBack: () => void
-}
-
-export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
+export const TrailheadFinder: React.FC = () => {
   const {
     travelMode,
     setTravelMode,
@@ -31,6 +29,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
     setIsQRCodeVisible,
   } = useTrailheadState()
 
+  const { currentView, setCurrentView } = useNavigation()
   const { recentIds, favoriteIds, pushRecent, toggleFavorite } = useRecents('trailheads')
   const { coords: userCoords, status: locateStatus, request: locate } = useGeolocation()
   const { provider, setProvider } = useMapProvider()
@@ -82,6 +81,8 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
     [setSelectedTrailhead, setSelectedEntrance, pushRecent]
   )
 
+  const selectedCoords = selectedEntrance ? parseCoords(selectedEntrance.query) : null
+
   // Derived, not stored: a pure function of the selection, mode, and provider.
   const url = selectedEntrance
     ? buildDirectionsUrl(provider, selectedEntrance.query, travelMode)
@@ -101,7 +102,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
             />
           )}
           <TravelModeSwitch value={travelMode} onChange={setTravelMode} />
-          <ViewNav target="landmarks" onNavigate={onBack} />
+          <ViewNav target="landmarks" onNavigate={() => setCurrentView('landmarks')} />
         </>
       }
     >
@@ -119,7 +120,7 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
       />
 
       {selectedEntrance && (
-        <div className="space-y-1 rounded-control bg-surface p-4">
+        <div className="reveal space-y-1 rounded-control bg-surface p-4">
           {selectedEntrance.milemarker && (
             <p className="text-sm text-ink-muted">
               <span className="font-semibold">Mile Marker:</span> {selectedEntrance.milemarker}
@@ -129,6 +130,17 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
             <p className="text-sm text-ink-muted">
               <span className="block font-semibold">Notes:</span> {selectedEntrance.notes}
             </p>
+          )}
+          {selectedCoords && (
+            <>
+              <p className="pt-1 font-mono text-sm tabular-nums text-ink-faint">
+                {selectedCoords.lat.toFixed(6)}, {selectedCoords.lng.toFixed(6)}
+              </p>
+              <CopyButton
+                value={`${selectedCoords.lat}, ${selectedCoords.lng}`}
+                label={`Copy coordinates for ${selectedTrailhead?.name ?? 'this trailhead'}`}
+              />
+            </>
           )}
         </div>
       )}
@@ -151,13 +163,16 @@ export const TrailheadFinder: React.FC<Props> = ({ onBack }) => {
             )}
           </button>
           {isQRCodeVisible && (
-            <QRCodeDisplay
-              url={url}
-              size={192}
-              title={selectedTrailhead?.name}
-              subtitle={selectedEntrance?.name}
-              mode={travelMode}
-            />
+            <div className="reveal-collapse">
+              <QRCodeDisplay
+                url={url}
+                size={192}
+                active={currentView === 'trailheads'}
+                title={selectedTrailhead?.name}
+                subtitle={selectedEntrance?.name}
+                mode={travelMode}
+              />
+            </div>
           )}
         </div>
       )}

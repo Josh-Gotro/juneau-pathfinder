@@ -1,6 +1,7 @@
 import React, { useCallback, useDeferredValue, useId, useMemo, useRef, useState } from 'react'
 import { SearchIcon, StarIcon, LocationArrowIcon, ChevronDownIcon } from './icons'
 import type { LocateStatus } from '../hooks/useGeolocation'
+import { tap } from '../utils/haptics'
 
 export interface PickerItem {
   id: string
@@ -73,6 +74,7 @@ export const PlacePicker: React.FC<Props> = ({
 
   const choose = useCallback(
     (id: string) => {
+      tap()
       onSelect(id)
       close()
     },

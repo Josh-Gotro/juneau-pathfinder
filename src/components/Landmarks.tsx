@@ -17,7 +17,7 @@ import { useLandmarksState, useNavigation } from '../context/AppContext'
 export const Landmarks: React.FC = () => {
   const { travelMode, setTravelMode, selectedDestination, setSelectedDestination } =
     useLandmarksState()
-  const { setCurrentView } = useNavigation()
+  const { currentView, setCurrentView } = useNavigation()
 
   const { recentIds, favoriteIds, pushRecent, toggleFavorite } = useRecents('landmarks')
   const { coords: userCoords, status: locateStatus, request: locate } = useGeolocation()
@@ -90,7 +90,13 @@ export const Landmarks: React.FC = () => {
       />
 
       {url && (
-        <QRCodeDisplay url={url} title={selectedDestination?.name} mode={travelMode} />
+        <QRCodeDisplay
+          className="reveal"
+          url={url}
+          title={selectedDestination?.name}
+          mode={travelMode}
+          active={currentView === 'landmarks'}
+        />
       )}
     </AppShell>
   )
